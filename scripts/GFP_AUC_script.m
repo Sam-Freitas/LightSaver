@@ -1,4 +1,4 @@
-img_dir_path = "C:\Users\Lab PC\Desktop\Raul\12-9-21\Exported";
+img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\GFP_marker_strains";
 
 img_paths = dir(fullfile(img_dir_path, '*.tif'));
 [~,sort_idx,~] = natsort({img_paths.name});
