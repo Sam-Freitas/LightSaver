@@ -1,15 +1,18 @@
 close all
-img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
+img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16.1\Exported\";
 
 show_output_images = 0;
 
-output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_data');
+output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_images');
 mkdir(output_path);
 
 img_paths = dir(fullfile(img_dir_path, '*.tif'));
 [~,sort_idx,~] = natsort({img_paths.name});
 
 img_paths = img_paths(sort_idx);
+
+image_integral_intensities = zeros(length(img_paths),5);
+image_integral_area = zeros(length(img_paths),5);
 
 for i = 1:length(img_paths)
     
@@ -91,10 +94,10 @@ for i = 1:length(img_paths)
         image_integral_intensities(i,j) = sum(sum(this_labeled_mask.*double(data)));
         image_integral_area(i,j) = sum(sum((this_labeled_mask.*double(data))>0));
         
-        if image_integral_area(i,j)>20000
-            image_integral_area(i,j) = 0;
-            image_integral_intensities(i,j) = 0;
-        end
+%         if image_integral_area(i,j)>20000
+%             image_integral_area(i,j) = 0;
+%             image_integral_intensities(i,j) = 0;
+%         end
     end
     
     % converts the labeled mask to RGB (easier to read)
@@ -118,6 +121,18 @@ for i = 1:length(img_paths)
     
 end
 
+output_csv = cell(1 + length(img_paths),11);
 
+output_header = {'Image names',...
+    'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity','Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
+    'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area','Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area','Worm 5 (orange) integrated Area'};
 
+output_csv(1,:) = output_header;
+output_csv(2:end,2:6) = num2cell(image_integral_intensities);
+output_csv(2:end,7:11) = num2cell(image_integral_area);
+for i = 1:length(img_paths)
+    output_csv{i+1,1} = img_paths(i).name;
+end
 
+T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
+writetable(T,[ char(img_dir_path) 'data.csv'])
