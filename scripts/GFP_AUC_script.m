@@ -1,5 +1,5 @@
 close all
-img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16.1\Exported\";
+img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
 
 show_output_images = 0;
 
@@ -10,8 +10,6 @@ img_paths = dir(fullfile(img_dir_path, '*.tif'));
 [~,sort_idx,~] = natsort({img_paths.name});
 
 img_paths = img_paths(sort_idx);
-
-bad_imgs = [10,23,37,38,39,43,45,47,48,53,67];
 
 for i = 1:length(img_paths)
     
@@ -76,6 +74,8 @@ for i = 1:length(img_paths)
     
     % thicken all the masks 
     new_mask = bwmorph(this_mask,'Thicken',1);
+    % close small edges and zones
+    new_mask = imclose(new_mask,strel('disk',5));
     % fill the holes 
     new_mask = imfill(new_mask,'holes');
     % re-label the masks 
