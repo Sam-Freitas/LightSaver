@@ -40,7 +40,6 @@ for i = 1:length(img_paths)
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
     
-    % setp through consequitive iterations of a threshol
     for j = 1:6
         this_thresh = mean2(data_norm)+(std2(data_norm)*(1/5)*(j-1));
         this_mask = imgaussfilt(data_norm,2)>this_thresh;
@@ -86,14 +85,11 @@ for i = 1:length(img_paths)
         end
     end
     
-    rgb_labeled_mask = label2rgb(labeled_masks,'jet','k');
-    masked_data_output = masked_data/max(masked_data(:));
-    
-    imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
+    imwrite(imtile({this_img,label2rgb(labeled_masks,'jet','k'),masked_data/max(masked_data(:))},'GridSize',[1,3]),...
         fullfile(output_path,[img_paths(i).name '_img' num2str(i) '.png']))
     
     if show_output_images == 1
-        imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
+        imshow(imtile({this_img,label2rgb(labeled_masks,'jet','k'),masked_data/max(masked_data(:))},'GridSize',[1,3]),[]);
         title([img_paths(i).name ' -- img ' num2str(i)], 'Interpreter', 'none');
     end
     
