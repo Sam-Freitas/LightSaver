@@ -91,8 +91,8 @@ for i = 1:length(img_paths)
     % integrate the entire signal across the masks and only the masks  
     for j = 1:max(labeled_masks(:))
         this_labeled_mask = double(data).*(labeled_masks==j);
-        image_integral_intensities(i,j) = sum(sum(this_labeled_mask.*double(data)));
-        image_integral_area(i,j) = sum(sum((this_labeled_mask.*double(data))>0));
+        image_integral_intensities(i,j) = sum(sum(this_labeled_mask));
+        image_integral_area(i,j) = sum(sum((this_labeled_mask)>0));
         
 %         if image_integral_area(i,j)>20000
 %             image_integral_area(i,j) = 0;
