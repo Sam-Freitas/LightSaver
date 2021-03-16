@@ -1,9 +1,17 @@
 close all
-img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
+% img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
+
+curr_path = pwd;
+
+data_path = fullfile(erase(curr_path,'scripts'),'data');
+
+img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
+
+[~,final_save_name,~] = fileparts(img_dir_path);
 
 show_output_images = 0;
 
-number_worms_to_detect = 5;
+number_worms_to_detect = 3;
 
 output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_images');
 mkdir(output_path);
@@ -20,6 +28,12 @@ for i = 1:length(img_paths)
     
     % read the image into ram
     this_img = imread(fullfile(img_dir_path,img_paths(i).name));
+    
+    % if for some reason the luma,blue, or red difference were saved aswell
+    [~,~,z] = size(this_img);
+    if z>3
+        this_img = this_img(:,:,1:3);
+    end
         
     % Split channles
     R = this_img(:,:,1); G = this_img(:,:,2); B = this_img(:,:,3);
@@ -137,4 +151,10 @@ for i = 1:length(img_paths)
 end
 
 T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
-writetable(T,[ char(img_dir_path) 'data.csv'])
+writetable(T,fullfile(char(img_dir_path),'data.csv'))
+
+if isfile(fullfile(data_path,[final_save_name '.csv']))
+    writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
+else
+    writetable(T,fullfile(data_path,[final_save_name '.csv']))
+end
