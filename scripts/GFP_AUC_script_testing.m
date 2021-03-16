@@ -1,11 +1,11 @@
-
-
 close all
-img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16.1\Exported\";
+img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
 
 show_output_images = 0;
 
-output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_data');
+number_worms_to_detect = 5;
+
+output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_images');
 mkdir(output_path);
 
 img_paths = dir(fullfile(img_dir_path, '*.tif'));
@@ -13,7 +13,8 @@ img_paths = dir(fullfile(img_dir_path, '*.tif'));
 
 img_paths = img_paths(sort_idx);
 
-bad_imgs = [10,23,37,38,39,43,45,47,48,53,67];
+image_integral_intensities = zeros(length(img_paths),number_worms_to_detect);
+image_integral_area = zeros(length(img_paths),number_worms_to_detect);
 
 for i = 1:length(img_paths)
     
@@ -42,56 +43,77 @@ for i = 1:length(img_paths)
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
     
+    % setp through consequitive iterations of a threshold based off the
+    % mean and std of the image intensities
     for j = 1:6
+        % create a threshold
         this_thresh = mean2(data_norm)+(std2(data_norm)*(1/5)*(j-1));
+        % create a mask
         this_mask = imgaussfilt(data_norm,2)>this_thresh;
-        
+        % remove any small blobs from the mask
         this_mask = bwareaopen(this_mask,3000);
-        
+        % label the mask 
         this_label = bwlabel(this_mask);
         
-        if max(this_label(:)) == 5
-            
+        % if there are 5 blobs in the mask
+        if max(this_label(:)) == number_worms_to_detect
+            % step one iteration further
             this_thresh2 = mean2(data_norm)+(std2(data_norm)*(1/5)*(j));
             this_mask2 = imgaussfilt(data_norm,2)>this_thresh2;
             this_mask2 = bwareaopen(this_mask2,3000);
             this_label2 = bwlabel(this_mask2);
             
-            if max(this_label2(:)) == 5
+            % if there are still 5 blobs then keep this mask 
+            if max(this_label2(:)) == number_worms_to_detect
                 this_mask = this_mask2;
                 this_label = this_label2;
+                
+                % break out of the loop
                 break
             end
+            % break out of the loop if there are 5 blobs 
             break
         end
         
     end
     
-    new_mask = imfill(this_mask,'holes');
-    new_mask = bwmorph(new_mask,'Thicken',1);
+    % thicken all the masks 
+    new_mask = bwmorph(this_mask,'Thicken',1);
+    % close small edges and zones
+    new_mask = imclose(new_mask,strel('disk',5));
+    % fill the holes 
+    new_mask = imfill(new_mask,'holes');
+    % re-label the masks 
     labeled_masks = bwlabel(new_mask);
     
-    % mask the inital data without the normalization
+    % mask the inital data without the normalization step
     % gets rid of background signals 
     masked_data = new_mask.*double(data); 
     
-    % integrate the entire signal across the mask 
+    % integrate the entire signal across the masks and only the masks  
     for j = 1:max(labeled_masks(:))
         this_labeled_mask = double(data).*(labeled_masks==j);
-        image_integral_intensities(i,j) = sum(sum(this_labeled_mask.*double(data)));
-        image_integral_area(i,j) = sum(sum((this_labeled_mask.*double(data))>0));
+        image_integral_intensities(i,j) = sum(sum(this_labeled_mask));
+        image_integral_area(i,j) = sum(sum((this_labeled_mask)>0));
         
-        if image_integral_area(i,j)>20000
-            image_integral_area(i,j) = 0;
-            image_integral_intensities(i,j) = 0;
-        end
+%         if image_integral_area(i,j)>20000
+%             image_integral_area(i,j) = 0;
+%             image_integral_intensities(i,j) = 0;
+%         end
     end
     
-    imwrite(imtile({this_img,label2rgb(labeled_masks,'jet','k'),masked_data/max(masked_data(:))},'GridSize',[1,3]),...
+    % converts the labeled mask to RGB (easier to read)
+    rgb_labeled_mask = label2rgb(labeled_masks,'jet','k');
+    % get the masked data ready for export
+    masked_data_output = masked_data/max(masked_data(:));
+    
+    % write the image sequence to the export folder
+    imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
         fullfile(output_path,[img_paths(i).name '_img' num2str(i) '.png']))
     
+    % show the sequence if necessary 
     if show_output_images == 1
-        imshow(imtile({this_img,label2rgb(labeled_masks,'jet','k'),masked_data/max(masked_data(:))},'GridSize',[1,3]),[]);
+        imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
         title([img_paths(i).name ' -- img ' num2str(i)], 'Interpreter', 'none');
     end
     
@@ -101,6 +123,18 @@ for i = 1:length(img_paths)
     
 end
 
+output_csv = cell(1 + length(img_paths),11);
 
+output_header = {'Image names',...
+    'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity','Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
+    'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area','Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area','Worm 5 (orange) integrated Area'};
 
+output_csv(1,:) = output_header;
+output_csv(2:end,2:6) = num2cell(image_integral_intensities);
+output_csv(2:end,7:11) = num2cell(image_integral_area);
+for i = 1:length(img_paths)
+    output_csv{i+1,1} = img_paths(i).name;
+end
 
+T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
+writetable(T,[ char(img_dir_path) 'data.csv'])
