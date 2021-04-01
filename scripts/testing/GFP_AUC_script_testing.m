@@ -1,6 +1,5 @@
 close all
 clear all
-warning('off', 'MATLAB:MKDIR:DirectoryExists');
 % img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
 
 curr_path = pwd;
@@ -29,18 +28,7 @@ image_integral_area = zeros(length(img_paths),number_worms_to_detect);
 for i = 1:length(img_paths)
     
     % read the image into ram
-    try
-        this_img = imread(fullfile(img_dir_path,img_paths(i).name));
-    catch
-        disp(['ERROR: reading image - ' img_paths(i).name])
-        disp(['Image will be treated as corrupted and skipped']);
-        
-        try
-            this_img = zeros(size(this_img));
-        catch
-            this_img = zeros(1024,1024);
-        end        
-    end
+    this_img = imread(fullfile(img_dir_path,img_paths(i).name));
     
     % if for some reason the luma,blue, or red difference were saved aswell
     [~,~,z] = size(this_img);
@@ -101,14 +89,6 @@ for i = 1:length(img_paths)
             % break out of the loop if there are 5 blobs 
             break
         end
-        
-    end
-    
-    if max(this_label(:))>number_worms_to_detect
-        disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_paths(i).name])
-        disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
-        
-        this_mask = bwareafilt(this_label>0,number_worms_to_detect);
         
     end
     
@@ -179,6 +159,3 @@ if isfile(fullfile(data_path,[final_save_name '.csv']))
 else
     writetable(T,fullfile(data_path,[final_save_name '.csv']))
 end
-
-disp(' ')
-disp('End of scrip')
