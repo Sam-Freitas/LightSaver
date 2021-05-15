@@ -124,7 +124,7 @@ for i = 1:length(img_paths)
         
         BG = (B./G).*new_mask;
         
-        BG_color = ind2rgb(im2uint8(BG),cmap);
+        BG_color = ind2rgb(im2uint8(BG/max(BG(:))),cmap);
         
         % mask the inital data without the normalization step
         % gets rid of background signals
