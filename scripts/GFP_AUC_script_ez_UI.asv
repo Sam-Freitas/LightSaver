@@ -122,24 +122,19 @@ for i = 1:length(img_paths)
     end
     
     % if this is chosen then a semi-smart filter will try to fix the large
-    % blobs that contain multiple worms
+    % blobs that contain
     if use_large_blob_fix
         
-        % get region profile
         s = regionprops(this_label,'basic');
         
-        % determine if the areas are correct
         is_over_large(i) = sum([s.Area]>20000);
         
-        % if they are not 
         if is_over_large(i)
             disp(['Warning: Large blobs detected in - ' img_paths(i).name])
             disp(['Attempting to fix blobs'])
             
-            % find which blobs are not correct
             is_over_idx = nonzeros(([s.Area]>20000).*(1:length([s.Area])));
             
-            % get the first mask without the improper blobs
             first_mask = zeros(size(this_label));
             for j = 1:max(this_label(:))
                 if ~ismember(j,is_over_idx)
@@ -147,21 +142,20 @@ for i = 1:length(img_paths)
                 end
             end
             
-            % iterate
             for j = 1:length(is_over_idx)
-                % find the large blob
+                
                 temp_mask = (this_label==is_over_idx(j));
-                % isolate the data
+                
                 temp_data_norm = (temp_mask.*data_norm);
-                % create a new mask 
+                
                 temp_mask2 = temp_data_norm>mean2(nonzeros(temp_data_norm));
-                % add that to the old masks 
+                
                 first_mask = first_mask + temp_mask2;
                 
             end
-            % isolate the 5 largest blobs
+            
             this_mask = bwareafilt(first_mask>0,number_worms_to_detect);
-            % label them
+            
             this_label = bwlabel(this_mask);
             
         end
