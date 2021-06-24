@@ -12,14 +12,17 @@ img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tif
 [~,final_save_name,~] = fileparts(img_dir_path);
 
 % variable to decide to show all the output images as they are processed
-% (slow) 
+% default do not show images - 0
+% show output in figures - 1 (slow)
 show_output_images = 0;
 
 % User seleted number of worms
 number_worms_to_detect = 5;
 
 % If there are large blobs that need fixing (still a beta test)
-use_large_blob_fix = 1;
+% default - 0
+% use blob fix - 1
+use_large_blob_fix = 0;
 
 output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_images');
 mkdir(output_path);
