@@ -7,9 +7,12 @@ curr_path = pwd;
 
 data_path = fullfile(erase(erase(curr_path,'scripts'),'testing'),'data');
 
-img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
+% img_dir_path = uigetdir2(data_path,'Please select the bad images that need to be manually redone');
+img_paths = uigetdir2('Y:\Users\Raul Castro\Microscopes\Leica Fluorescence Stereoscope\2021-06-29\Exported','Please select the bad images that need to be manually redone');
 
-[~,final_save_name,~] = fileparts(img_dir_path);
+[folder_of_exp,img_names,img_extensions] = fileparts(img_paths);
+
+[~,final_save_name,~] = fileparts(folder_of_exp{1});
 
 % variable to decide to show all the output images as they are processed
 % default do not show images - 0
@@ -27,8 +30,7 @@ use_large_blob_fix = 0;
 output_path = fullfile(erase(data_path,'data'),'exported_images');
 mkdir(output_path);
 
-img_paths = dir(fullfile(img_dir_path, '*.tif'));
-[~,sort_idx,~] = natsort({img_paths.name});
+[~,sort_idx,~] = natsort(img_paths);
 
 img_paths = img_paths(sort_idx);
 
@@ -41,9 +43,9 @@ for i = 1:length(img_paths)
     
     % read the image into ram
     try
-        this_img = imread(fullfile(img_dir_path,img_paths(i).name));
+        this_img = imread(img_paths{i});
     catch
-        disp(['ERROR: reading image - ' img_paths(i).name])
+        disp(['ERROR: reading image - ' img_paths{i}])
         disp(['Image will be treated as corrupted and skipped']);
         
         try
@@ -79,98 +81,41 @@ for i = 1:length(img_paths)
     end
     
     % this assumes that all the data is in the uint8 format
-    data_norm = double(data)/255;
+    data_norm = double(data)/255;    
     
-    % setp through consequitive iterations of a threshold based off the
-    % mean and std of the image intensities
-    for j = 1:6
-        % create a threshold
-        this_thresh = mean2(data_norm)+(std2(data_norm)*(1/5)*(j-1));
-        % create a mask
-        this_mask = imgaussfilt(data_norm,2)>this_thresh;
-        % remove any small blobs from the mask
-        this_mask = bwareaopen(this_mask,3000);
-        % label the mask
-        this_label = bwlabel(this_mask);
+    this_mask = zeros(size(data));
         
-        % if there are 5 blobs in the mask
-        if max(this_label(:)) == number_worms_to_detect
-            % step one iteration further
-            this_thresh2 = mean2(data_norm)+(std2(data_norm)*(1/5)*(j));
-            this_mask2 = imgaussfilt(data_norm,2)>this_thresh2;
-            this_mask2 = bwareaopen(this_mask2,3000);
-            this_label2 = bwlabel(this_mask2);
+    redo = 'Yes';
+    while isequal(redo,'Yes')
+        
+        data2 = imadjust(data);
+        
+        make_another_roi = 'Yes';
+        while isequal(make_another_roi,'Yes')
             
-            % if there are still 5 blobs then keep this mask
-            if max(this_label2(:)) == number_worms_to_detect
-                this_mask = this_mask2;
-                this_label = this_label2;
-                
-                % break out of the loop
-                break
-            end
-            % break out of the loop if there are 5 blobs
-            break
+            imshow(data2,[]);
+            ROI = images.roi.AssistedFreehand;
+            draw(ROI)
+            
+            bw_ROI = createMask(ROI);
+            
+            this_mask = this_mask + bw_ROI;
+            this_mask = this_mask>0;
+            
+            data2(bw_ROI) = max(data2(:));
+            
+            imshow(data2,[])
+            
+            make_another_roi = questdlg({'Make another ROI?',...
+                'No will assume correct, You CAN overlay ROIS to fix them'},'ROI?','Yes','No','Yes');
         end
         
-    end
+        imshow(this_mask);
+        redo = questdlg({'Does this ROI need to be redone? Please double check',...
+            'If it does then this script will repeat'},'ROI?','Yes','No','Yes');
+    end    
     
-    % if there are many blobs still detected only take the 5 largest
-    if max(this_label(:))>number_worms_to_detect
-        disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_paths(i).name])
-        disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
-        
-        this_mask = bwareafilt(this_label>0,number_worms_to_detect);
-        
-    end
-    
-    % if this is chosen then a semi-smart filter will try to fix the large
-    % blobs that contain multiple worms
-    if use_large_blob_fix
-        
-        % get region profile
-        s = regionprops(this_label,'basic');
-        
-        % determine if the areas are correct
-        is_over_large(i) = sum([s.Area]>20000);
-        
-        % if they are not 
-        if is_over_large(i)
-            disp(['Warning: Large blobs detected in - ' img_paths(i).name])
-            disp(['Attempting to fix blobs'])
-            
-            % find which blobs are not correct
-            is_over_idx = nonzeros(([s.Area]>20000).*(1:length([s.Area])));
-            
-            % get the first mask without the improper blobs
-            first_mask = zeros(size(this_label));
-            for j = 1:max(this_label(:))
-                if ~ismember(j,is_over_idx)
-                    first_mask = first_mask + (this_label==j);
-                end
-            end
-            
-            % iterate
-            for j = 1:length(is_over_idx)
-                % find the large blob
-                temp_mask = (this_label==is_over_idx(j));
-                % isolate the data
-                temp_data_norm = (temp_mask.*data_norm);
-                % create a new mask 
-                temp_mask2 = temp_data_norm>mean2(nonzeros(temp_data_norm));
-                % add that to the old masks 
-                first_mask = first_mask + temp_mask2;
-                
-            end
-            % isolate the 5 largest blobs
-            this_mask = bwareafilt(first_mask>0,number_worms_to_detect);
-            % label them
-            this_label = bwlabel(this_mask);
-            
-        end
-        
-    end
-    
+    close all
     
     % thicken all the masks
     new_mask = bwmorph(this_mask,'Thicken',1);
@@ -204,12 +149,12 @@ for i = 1:length(img_paths)
     
     % write the image sequence to the export folder
     imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
-        fullfile(output_path,[img_paths(i).name '_img' num2str(i) '.png']))
+        fullfile(output_path,[img_names{i} '_img' num2str(i) '.png']))
     
     % show the sequence if necessary
     if show_output_images == 1
         imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
-        title([img_paths(i).name ' -- img ' num2str(i)], 'Interpreter', 'none');
+        title([img_names{i} ' -- img ' num2str(i)], 'Interpreter', 'none');
     end
     
     linear_data = nonzeros(masked_data);
@@ -218,7 +163,7 @@ for i = 1:length(img_paths)
     
 end
 
-output_csv = cell(1 + length(img_paths),11);
+output_csv = cell(1 + length(img_names),11);
 
 output_header = {'Image names',...
     'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity','Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
@@ -227,12 +172,36 @@ output_header = {'Image names',...
 output_csv(1,:) = output_header;
 output_csv(2:end,2:6) = num2cell(image_integral_intensities);
 output_csv(2:end,7:11) = num2cell(image_integral_area);
-for i = 1:length(img_paths)
-    output_csv{i+1,1} = img_paths(i).name;
+
+img_names_string = string(img_names);
+img_extensions_string = string(img_extensions);
+
+for i = 1:length(img_names)
+    output_csv{i+1,1} = char(img_names_string(i) + img_extensions_string(i));
 end
 
 T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
-writetable(T,fullfile(char(img_dir_path),'data.csv'))
+
+input_csv = readtable(fullfile(folder_of_exp{1},'data.csv'),'VariableNamingRule',"preserve");
+
+new_csv = input_csv;
+
+inital_names = string(input_csv.("Image names"));
+for i = 1:length(img_names)
+    
+    this_img_name = img_names_string(i) + img_extensions_string(i);
+    
+    idx = find(inital_names==this_img_name,1,'first');
+    
+    if ~isempty(idx)
+        new_csv(idx,:) = T(i,:);
+    else
+        disp(['could not find ' char(this_img_name) ' in data.csv']) 
+    end
+    
+end
+
+writetable(new_csv,fullfile(char(folder_of_exp{1}),'data.csv'))
 
 if isfile(fullfile(data_path,[final_save_name '.csv']))
     writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
