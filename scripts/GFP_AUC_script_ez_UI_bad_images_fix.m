@@ -105,6 +105,8 @@ for i = 1:length(img_paths)
             this_mask = this_mask + bw_ROI;
             this_mask = this_mask>0;
             
+            this_mask = imfill(this_mask,'holes');
+            
             data2(bw_ROI) = max(data2(:));
             
             imshow(data2,[])
@@ -116,6 +118,8 @@ for i = 1:length(img_paths)
             make_another_roi = questdlg({'Make another ROI?',...
                 'No will assume correct, You CAN overlay ROIS to fix them'},'ROI?','Yes','No','Yes');
         end
+        
+        this_mask = imfill(this_mask,'holes');
         
         imshow(this_mask);
         if iscell(img_names)
