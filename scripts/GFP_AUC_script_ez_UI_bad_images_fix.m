@@ -79,53 +79,63 @@ for i = 1:length(img_paths)
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
     
-    this_mask = zeros(size(data));
-    
+    % this will loop until the user says No
     redo = 'Yes';
     while isequal(redo,'Yes')
         
+        % make the zero array
+        this_mask = zeros(size(data));
+        
+        % contrast the data
         data2 = imadjust(data);
         
+        % ROI creation loops
         make_another_roi = 'Yes';
         while isequal(make_another_roi,'Yes')
             
-            
-            
+            % show the inital data
             imshow(data2,[]);
             if iscell(img_names)
-                title(img_names{i})
+                title(img_names{i},'interpreter','none')
             else
-                title(img_names)
+                title(img_names,'interpreter','none')
             end
+            
+            % make the user draw the ROI using the assisted freehand tool
             ROI = images.roi.AssistedFreehand;
+            % graphically draw the ROI
             draw(ROI)
             
+            % create a mask from the ROI
             bw_ROI = createMask(ROI);
             
+            % convert to growing mask 
             this_mask = this_mask + bw_ROI;
             this_mask = this_mask>0;
-            
             this_mask = imfill(this_mask,'holes');
             
+            % visually show the data growing the maks from the other pieces
             data2(bw_ROI) = max(data2(:));
             
+            % show the updated mask
             imshow(data2,[])
             if iscell(img_names)
-                title(img_names{i})
+                title(img_names{i},'interpreter','none')
             else
-                title(img_names)
+                title(img_names,'interpreter','none')
             end
             make_another_roi = questdlg({'Make another ROI?',...
-                'No will assume correct, You CAN overlay ROIS to fix them'},'ROI?','Yes','No','Yes');
+                'ROIS are assumed correct','You CAN overlay ROIS to fix them',...
+                'Note: Only the circled ROIs are processed'},'ROI?','Yes','No','Yes');
         end
         
+        % show the final mask
         this_mask = imfill(this_mask,'holes');
-        
         imshow(this_mask);
         if iscell(img_names)
-            title(img_names{i})
+            title(img_names{i},'interpreter','none')
         else
-            title(img_names)
+            title(img_names,'interpreter','none')
         end
         redo = questdlg({'Does this ROI need to be redone? Please double check',...
             'If it does then this script will repeat'},'ROI?','Yes','No','Yes');
@@ -173,9 +183,16 @@ for i = 1:length(img_paths)
     end
     
     % show the sequence if necessary
-    if show_output_images == 1
-        imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
-        title([img_names{i} ' -- img ' num2str(i)], 'Interpreter', 'none');
+    if iscell(img_names)
+        if show_output_images == 1
+            imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
+            title([img_names{i} ' -- img ' num2str(i)], 'Interpreter', 'none');
+        end
+    else
+        if show_output_images == 1
+            imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
+            title([img_names ' -- img ' num2str(i)], 'Interpreter', 'none');
+        end
     end
     
     linear_data = nonzeros(masked_data);
