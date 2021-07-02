@@ -1,18 +1,20 @@
-close all
+close all force hidden
 clear all
 warning('off', 'MATLAB:MKDIR:DirectoryExists');
-% img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
 
 curr_path = pwd;
 
 data_path = fullfile(erase(curr_path,'scripts'),'data');
 
-img_dir_path = uigetdir2(data_path,'Please select the bad images that need to be manually redone');
+img_paths = uigetdir2(data_path,'Please select the bad images that need to be manually redone');
 
 [folder_of_exp,img_names,img_extensions] = fileparts(img_paths);
 
-[~,final_save_name,~] = fileparts(folder_of_exp{1});
-
+if iscell(folder_of_exp)
+    [~,final_save_name,~] = fileparts(folder_of_exp{1});
+else
+    [~,final_save_name,~] = fileparts(folder_of_exp);
+end
 % variable to decide to show all the output images as they are processed
 % default do not show images - 0
 % show output in figures - 1 (slow)
@@ -75,10 +77,10 @@ for i = 1:length(img_paths)
     end
     
     % this assumes that all the data is in the uint8 format
-    data_norm = double(data)/255;    
+    data_norm = double(data)/255;
     
     this_mask = zeros(size(data));
-        
+    
     redo = 'Yes';
     while isequal(redo,'Yes')
         
@@ -87,7 +89,14 @@ for i = 1:length(img_paths)
         make_another_roi = 'Yes';
         while isequal(make_another_roi,'Yes')
             
+            
+            
             imshow(data2,[]);
+            if iscell(img_names)
+                title(img_names{i})
+            else
+                title(img_names)
+            end
             ROI = images.roi.AssistedFreehand;
             draw(ROI)
             
@@ -99,15 +108,24 @@ for i = 1:length(img_paths)
             data2(bw_ROI) = max(data2(:));
             
             imshow(data2,[])
-            
+            if iscell(img_names)
+                title(img_names{i})
+            else
+                title(img_names)
+            end
             make_another_roi = questdlg({'Make another ROI?',...
                 'No will assume correct, You CAN overlay ROIS to fix them'},'ROI?','Yes','No','Yes');
         end
         
         imshow(this_mask);
+        if iscell(img_names)
+            title(img_names{i})
+        else
+            title(img_names)
+        end
         redo = questdlg({'Does this ROI need to be redone? Please double check',...
             'If it does then this script will repeat'},'ROI?','Yes','No','Yes');
-    end    
+    end
     
     close all
     
@@ -142,8 +160,13 @@ for i = 1:length(img_paths)
     masked_data_output = masked_data/max(masked_data(:));
     
     % write the image sequence to the export folder
-    imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
-        fullfile(output_path,[img_names{i} '_img' num2str(i) '.png']))
+    if iscell(img_names)
+        imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
+            fullfile(output_path,[img_names{i} '_img' num2str(i) '.png']))
+    else
+        imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
+            fullfile(output_path,[img_names '_img' num2str(i) '.png']))
+    end
     
     % show the sequence if necessary
     if show_output_images == 1
@@ -157,7 +180,11 @@ for i = 1:length(img_paths)
     
 end
 
-output_csv = cell(1 + length(img_names),11);
+if iscell(img_names)
+    output_csv = cell(1 + length(img_names),11);
+else
+    output_csv = cell(2,11);
+end
 
 output_header = {'Image names',...
     'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity','Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
@@ -170,32 +197,59 @@ output_csv(2:end,7:11) = num2cell(image_integral_area);
 img_names_string = string(img_names);
 img_extensions_string = string(img_extensions);
 
-for i = 1:length(img_names)
-    output_csv{i+1,1} = char(img_names_string(i) + img_extensions_string(i));
+if iscell(img_names)
+    for i = 1:length(img_names)
+        output_csv{i+1,1} = char(img_names_string(i) + img_extensions_string(i));
+    end
+else
+    output_csv{2,1} = char(img_names_string + img_extensions_string);
 end
 
 T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
 
-input_csv = readtable(fullfile(folder_of_exp{1},'data.csv'),'VariableNamingRule',"preserve");
+if iscell(folder_of_exp)
+    input_csv = readtable(fullfile(folder_of_exp{1},'data.csv'),'VariableNamingRule',"preserve");
+else
+    input_csv = readtable(fullfile(folder_of_exp,'data.csv'),'VariableNamingRule',"preserve");
+end
 
 new_csv = input_csv;
 
 inital_names = string(input_csv.("Image names"));
-for i = 1:length(img_names)
-    
-    this_img_name = img_names_string(i) + img_extensions_string(i);
+if iscell(img_names)
+    for i = 1:length(img_names)
+        
+        this_img_name = img_names_string(i) + img_extensions_string(i);
+        
+        idx = find(inital_names==this_img_name,1,'first');
+        
+        if ~isempty(idx)
+            new_csv(idx,:) = T(i,:);
+        else
+            disp(['could not find ' char(this_img_name) ' in data.csv'])
+        end
+        
+    end
+else
+    this_img_name = img_names_string + img_extensions_string;
     
     idx = find(inital_names==this_img_name,1,'first');
     
     if ~isempty(idx)
-        new_csv(idx,:) = T(i,:);
+        new_csv(idx,:) = T(1,:);
     else
-        disp(['could not find ' char(this_img_name) ' in data.csv']) 
+        disp(['could not find ' char(this_img_name) ' in data.csv'])
     end
     
 end
 
-writetable(new_csv,fullfile(char(folder_of_exp{1}),'data.csv'))
+if iscell(folder_of_exp)
+    writetable(new_csv,fullfile(char(folder_of_exp{1}),'data.csv'))
+    disp(['Rewrote: ' fullfile(char(folder_of_exp{1}),'data.csv')])
+else
+    writetable(new_csv,fullfile(char(folder_of_exp),'data.csv'))
+    disp(['Rewrote: ' fullfile(char(folder_of_exp),'data.csv')])
+end
 
 if isfile(fullfile(data_path,[final_save_name '.csv']))
     writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
