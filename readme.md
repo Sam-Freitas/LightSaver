@@ -20,3 +20,11 @@ The University of Arizona, Sutphin Lab MCB, BME
 
 4.  Check output data if necessary
 
+  - If there are problems
+
+  - Large blobs?
+    - use the large_blob_fix option in GFP_AUC_script_ez_UI.m
+
+  - Just completely messed up?
+    - GFP_AUC_script_ez_UI_bad_images_fix.m
+
