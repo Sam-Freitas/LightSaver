@@ -14,7 +14,7 @@ The University of Arizona, Sutphin Lab MCB, BME
 
 this is how the directories (folders) should be setup to use the Data_analysis_and_export.m script properly
 
-  Overarching experiment (example: Oxidative stress)
+  - Overarching experiment (example: Oxidative stress)
   
     - Sub experiment 1 (example: day 1)
     
