@@ -188,8 +188,8 @@ for i = 1:length(img_paths)
     % integrate the entire signal across the masks and only the masks
     for j = 1:max(labeled_masks(:))
         this_labeled_mask = double(data).*(labeled_masks==j);
-        image_integral_intensities(i,j) = sum(sum(this_labeled_mask.*double(data)));
-        image_integral_area(i,j) = sum(sum((this_labeled_mask.*double(data))>0));
+        image_integral_intensities(i,j) = sum(sum(this_labeled_mask));
+        image_integral_area(i,j) = sum(sum((this_labeled_mask)>0));
         
         %         if image_integral_area(i,j)>20000
         %             image_integral_area(i,j) = 0;
@@ -201,10 +201,12 @@ for i = 1:length(img_paths)
     rgb_labeled_mask = label2rgb(labeled_masks,'jet','k');
     % get the masked data ready for export
     masked_data_output = masked_data/max(masked_data(:));
+
+    [~,this_img_name,~] = fileparts(img_paths(i).name);
     
     % write the image sequence to the export folder
     imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
-        fullfile(output_path,[img_paths(i).name '_img' num2str(i) '.png']))
+        fullfile(output_path,[this_img_name '_img' num2str(i) '.png']))
     
     % show the sequence if necessary
     if show_output_images == 1
