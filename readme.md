@@ -51,7 +51,7 @@ this is how the directories (folders) should be setup to use the Data_analysis_a
 
 # Usage: data analysis
 
-1.  open "Data_analysis_and_export.m"
+1.  open and run "Data_analysis_and_export.m"
 
 2.  Choose the overarching experiment folder from the dropdown menu
 
