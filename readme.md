@@ -37,7 +37,9 @@ this is how the directories (folders) should be setup to use the Data_analysis_a
 
 3.  Run "GFP_AUC_script_ez_UI.m"
 
-4.  Check output data if necessary
+4.  Choose the directory containing the *.tiff* images
+
+5.  Check output data if necessary
 
   - If there are problems
 
@@ -47,7 +49,7 @@ this is how the directories (folders) should be setup to use the Data_analysis_a
   - Just completely messed up?
     - GFP_AUC_script_ez_UI_bad_images_fix.m
 
-5.  There should now be a data.csv file in the directory that contains the *.tifs 
+6.  There should now be a data.csv file in the directory that contains the *.tifs 
 
 # Usage: data analysis
 
