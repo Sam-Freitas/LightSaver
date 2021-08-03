@@ -10,7 +10,26 @@ The University of Arizona, Sutphin Lab MCB, BME
 
 ------------------------------------------------------------------------------------------------
 
-# Usage:
+# File parameters setup
+
+this is how the directories (folders) should be setup to use the Data_analysis_and_export.m script properly
+
+  - Overarching experiment (example: Oxidative stress)
+  
+    - Sub experiment 1 (example: day 1)
+    
+      - some directory with the *.tiff* files (example: exported images from LEICA)
+      
+    - ...
+   
+    - Sub Experiment N (example: day n)
+    
+      - some directory with the *.tiff* files (example: exported images from LEICA)
+      
+
+------------------------------------------------------------------------------------------------
+
+# Usage: image processing 
 
 1.  open "GFP_AUC_script_ez_UI.m"
 
@@ -18,7 +37,9 @@ The University of Arizona, Sutphin Lab MCB, BME
 
 3.  Run "GFP_AUC_script_ez_UI.m"
 
-4.  Check output data if necessary
+4.  Choose the directory containing the *.tiff* images
+
+5.  Check output data if necessary
 
   - If there are problems
 
@@ -27,4 +48,15 @@ The University of Arizona, Sutphin Lab MCB, BME
 
   - Just completely messed up?
     - GFP_AUC_script_ez_UI_bad_images_fix.m
+
+6.  There should now be a data.csv file in the directory that contains the *.tifs 
+
+# Usage: data analysis
+
+1.  open and run "Data_analysis_and_export.m"
+
+2.  Choose the overarching experiment folder from the dropdown menu
+
+3.  Check to make sure the "Analyzed_data.csv" is correct and the output_figures directory is present
+
 
