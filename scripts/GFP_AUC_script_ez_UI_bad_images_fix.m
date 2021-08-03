@@ -145,8 +145,8 @@ for i = 1:length(img_paths)
     
     % thicken all the masks
     new_mask = bwmorph(this_mask,'Thicken',1);
-    % close small edges and zones
-    new_mask = imclose(new_mask,strel('disk',5));
+%     % close small edges and zones
+%     new_mask = imclose(new_mask,strel('disk',5));
     % fill the holes
     new_mask = imfill(new_mask,'holes');
     % re-label the masks
