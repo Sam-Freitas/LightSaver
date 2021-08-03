@@ -160,18 +160,76 @@ end
 
 writecell(final_array,fullfile(exp_dir_path,'Analyzed_data.csv'));
 
+final_array_names = final_array(1,:);
+final_array_names = final_array_names(~cellfun('isempty',final_array_names));
+data_subdivisions = cellstr(string(final_array_names));
 
-final_array_names =  img_names_split{i}(~cellfun('isempty',img_names_split{i}));
+mkdir(fullfile(exp_dir_path,'output_figures'));
+mkdir(fullfile(exp_dir_path,'output_figures','per_day'));
+mkdir(fullfile(exp_dir_path,'output_figures','per_condition'));
+
 for i = 1:length(day_names)
     
-    Origin = cellstr(final_array);
-    figure
-    vs = violinplot(MPG, Origin);
-    ylabel('Fuel Economy in MPG');
-    xlim([0.5, 7.5]);
+    out_name = strrep([experiment_name '--' day_names{i}],' ','_');
+    
+    this_data = final_array(i+1,2:end);
+    this_data = cell2mat(this_data(~cellfun('isempty',this_data)));
+    
+    hFig = figure('units','normalized','outerposition',[0 0 1 1]);
+    vs = violinplot(this_data, data_subdivisions);
+    ylabel('AUC per condition');
+    title(out_name,'Interpreter','none')
+    drawnow;
+    
+    pause(0.1);
+    saveas(hFig,fullfile(exp_dir_path,'output_figures','per_day',[char(out_name) '.png'])); 
     
 end
+close all
 
+day_plot_names = strings();
+for i = 1:length(data_subdivisions)
+    
+    for j = 1:length(day_names)
+        day_plot_names(j,i) = join([string(data_subdivisions{i});string(day_names{j})],1);
+    end
+end
+
+for i = 1:length(condition_names)
+    
+    out_name = strrep(condition_names{i},' ','_');
+    
+    this_condition = condition_names{i};
+    
+    this_condition_idx = find(string(data_subdivisions) == string(this_condition));
+    
+    this_data = final_array(2:end,this_condition_idx+1);
+    this_day_plot_names = day_plot_names(:,this_condition_idx);
+    
+    this_data_vector = cell2mat(flip(reshape(rot90(flip(this_data)),1,numel(this_data))));
+    this_day_plot_names_vector = flip(reshape(rot90(flip(this_day_plot_names)),1,numel(this_day_plot_names)));
+    this_data_names = join([repmat(string(condition_names{i}),1,length(day_names));string(day_names)],' ',1);
+    
+    this_data_names_cell = cell(1,length(this_data_names));
+    for j = 1:length(this_data_names)
+        this_data_names_cell{j} = char(this_data_names(j));
+    end
+    
+    this_data_names_cell = natsort(this_data_names_cell);
+    
+    hFig = figure('units','normalized','outerposition',[0 0 1 1]);
+    vs = violinplot(this_data_vector, this_day_plot_names_vector,'GroupOrder',this_data_names_cell);
+    ylabel('AUC per condition');
+    title(out_name,'Interpreter','none')
+    
+    pause(0.1);
+    saveas(hFig,fullfile(exp_dir_path,'output_figures','per_condition',[char(out_name) '.png'])); 
+    
+end
+close all
+
+disp('All data exported to')
+disp(exp_dir_path);
 
 %%%%%%%%%% find a way to combine the day_idx and condition_idx to get rauls
 %%%%%%%%%% way of updateing stuff
