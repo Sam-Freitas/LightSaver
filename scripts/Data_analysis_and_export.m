@@ -44,7 +44,12 @@ for i = 1:length(csv_table)
     end
 end
 
-temp_table_array = table2array(full_table(:,2:end));
+try
+    temp_table_array = table2array(full_table(:,2:end));
+    disp('data not detected on column 2, trying column 6')
+catch
+    temp_table_array = table2array(full_table(:,6:end));
+end
 
 AUC_array = temp_table_array(:,1:5)./temp_table_array(:,6:10);
 
@@ -52,7 +57,7 @@ AUC_array = temp_table_array(:,1:5)./temp_table_array(:,6:10);
 img_names = full_table.("Image names");
 img_names_split = cell(1,length(img_names));
 img_names_no_day = img_names;
-img_names_only_day{i} = img_names;
+img_names_only_day = img_names;
 
 % get split names
 for i = 1:length(img_names)
@@ -208,7 +213,7 @@ for i = 1:length(condition_names)
     
     this_data_vector = cell2mat(flip(reshape(rot90(flip(this_data)),1,numel(this_data))));
     this_day_plot_names_vector = flip(reshape(rot90(flip(this_day_plot_names)),1,numel(this_day_plot_names)));
-    this_data_names = join([repmat(string(condition_names{i}),1,length(day_names));string(day_names)],' ',1);
+    this_data_names = join([repmat(string(condition_names{i}),1,length(day_names));string(day_names)'],' ',1);
     
     this_data_names_cell = cell(1,length(this_data_names));
     for j = 1:length(this_data_names)
