@@ -102,39 +102,13 @@ end
 % get all the condition names
 condition_names = unique(img_names_split2)';
 
-% get all condition subnames
 condition_subnames = {};
 for i = 1:length(condition_names)
     temp = cellstr(strsplit(condition_names{i}));
-    condition_subnames = [condition_subnames,temp];
 end
-condition_subnames = unique(condition_subnames);
 
-% find if subname is contained in ALL the names
 for i = 1:length(condition_names)
-    for j = 1:length(condition_subnames)
-        TF(i,j) = contains(condition_names{i},condition_subnames{j});
-    end
-end
-
-contained_in_all_names = find(sum(TF) == length(condition_names));
-
-if ~isempty(contained_in_all_names)
-    for i = 1:length(contained_in_all_names)
-        for j = 1:length(condition_names)
-            condition_names{j} = erase(condition_names{j},condition_subnames{contained_in_all_names(i)});
-            if isequal(condition_names{j}(1),' ')
-                condition_names{j} = condition_names{j}(2:end);
-            end
-        end
-        
-        for j = 1:length(condition_names)
-            if isequal(condition_names{j}(1),' ')
-                condition_names{j} = condition_names{j}(2:end);
-            end
-        end
-        
-    end
+    
 end
 
 % get all the day names
