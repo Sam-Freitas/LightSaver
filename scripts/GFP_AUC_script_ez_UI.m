@@ -3,6 +3,29 @@ clear all
 warning('off', 'MATLAB:MKDIR:DirectoryExists');
 % img_dir_path = "C:\Users\Lab PC\Documents\GFP_AUC\data\Raul_data\2021-02-16\Exported\";
 
+% User input choice
+prompt = {'Enter number of worms to detect: ', ...
+    'Show output images - yes(1) - no(0)',...
+    'Use large blob fix - yes (1) - no(0)',...
+    'Output name - leave blank for defaults - or enter name for exported_images sub-folder'};
+dlgtitle = 'User Inputs for Lightsaver';
+dims = [1 100];
+definput = {'5','0','0',''};
+answer = inputdlg(prompt,dlgtitle,dims,definput);
+
+if isempty(answer)
+    error('Please select user inputs')
+end
+
+number_worms_to_detect = str2double(answer{1});
+show_output_images = str2double(answer{2});
+use_large_blob_fix = str2double(answer{3});
+output_name = answer{4};
+
+% clean up variables
+clearvars dims definput dlgtitle prompt answer
+
+% get current path
 curr_path = pwd;
 
 data_path = fullfile(erase(curr_path,'scripts'),'data');
@@ -11,20 +34,14 @@ img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tif
 
 [~,final_save_name,~] = fileparts(img_dir_path);
 
-% variable to decide to show all the output images as they are processed
-% default do not show images - 0
-% show output in figures - 1 (slow)
-show_output_images = 0;
-
-% User seleted number of worms
-number_worms_to_detect = 5;
-
-% If there are large blobs that need fixing (still a beta test)
-% default - 0
-% use blob fix - 1
-use_large_blob_fix = 0;
-
 output_path = fullfile(erase(erase(pwd,'GFP_AUC_script.m'),'scripts'),'exported_images');
+mkdir(output_path);
+
+if isempty(output_name)
+    output_name = final_save_name;
+end
+
+output_path = fullfile(output_path,output_name);
 mkdir(output_path);
 
 img_paths = dir(fullfile(img_dir_path, '*.tif'));
@@ -39,44 +56,7 @@ se = strel('disk',5);
 
 for i = 1:length(img_paths)
     
-    % read the image into ram
-    try
-        this_img = imread(fullfile(img_dir_path,img_paths(i).name));
-    catch
-        disp(['ERROR: reading image - ' img_paths(i).name])
-        disp(['Image will be treated as corrupted and skipped']);
-        
-        try
-            this_img = zeros(size(this_img));
-        catch
-            this_img = zeros(1024,1024);
-        end
-    end
-    
-    % if for some reason the luma,blue, or red difference were saved aswell
-    [~,~,z] = size(this_img);
-    if z>3
-        this_img = this_img(:,:,1:3);
-    end
-    
-    % Split channles
-    R = this_img(:,:,1); G = this_img(:,:,2); B = this_img(:,:,3);
-    
-    % find the dominant color of the fluorescence
-    [~,color_choice] = max([sum(R(:)),sum(G(:)),sum(B(:))]);
-    
-    % Remove 1mm bar from our microscope images
-    switch color_choice
-        case 1
-            % red fluorescence
-            data = R - G - B;
-        case 2
-            % green fluorescence
-            data = G - B - R;
-        case 3
-            % blue fluorescence
-            data = B - R - G;
-    end
+    [data,this_img] = load_fluor_image(img_dir_path,img_paths,i);
     
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
@@ -128,46 +108,8 @@ for i = 1:length(img_paths)
     % blobs that contain multiple worms
     if use_large_blob_fix
         
-        % get region profile
-        s = regionprops(this_label,'basic');
-        
-        % determine if the areas are correct
-        is_over_large(i) = sum([s.Area]>20000);
-        
-        % if they are not 
-        if is_over_large(i)
-            disp(['Warning: Large blobs detected in - ' img_paths(i).name])
-            disp(['Attempting to fix blobs'])
-            
-            % find which blobs are not correct
-            is_over_idx = nonzeros(([s.Area]>20000).*(1:length([s.Area])));
-            
-            % get the first mask without the improper blobs
-            first_mask = zeros(size(this_label));
-            for j = 1:max(this_label(:))
-                if ~ismember(j,is_over_idx)
-                    first_mask = first_mask + (this_label==j);
-                end
-            end
-            
-            % iterate
-            for j = 1:length(is_over_idx)
-                % find the large blob
-                temp_mask = (this_label==is_over_idx(j));
-                % isolate the data
-                temp_data_norm = (temp_mask.*data_norm);
-                % create a new mask 
-                temp_mask2 = temp_data_norm>mean2(nonzeros(temp_data_norm));
-                % add that to the old masks 
-                first_mask = first_mask + temp_mask2;
-                
-            end
-            % isolate the 5 largest blobs
-            this_mask = bwareafilt(first_mask>0,number_worms_to_detect);
-            % label them
-            this_label = bwlabel(this_mask);
-            
-        end
+        [this_label,this_mask,large_blob_is_fixed] = large_blob_fix(this_label,...
+            this_mask,data_norm,img_paths,number_worms_to_detect,i);
         
     end
     
@@ -190,11 +132,6 @@ for i = 1:length(img_paths)
         this_labeled_mask = double(data).*(labeled_masks==j);
         image_integral_intensities(i,j) = sum(sum(this_labeled_mask));
         image_integral_area(i,j) = sum(sum((this_labeled_mask)>0));
-        
-        %         if image_integral_area(i,j)>20000
-        %             image_integral_area(i,j) = 0;
-        %             image_integral_intensities(i,j) = 0;
-        %         end
     end
     
     % converts the labeled mask to RGB (easier to read)
@@ -203,6 +140,10 @@ for i = 1:length(img_paths)
     masked_data_output = masked_data/max(masked_data(:));
 
     [~,this_img_name,~] = fileparts(img_paths(i).name);
+    
+    if large_blob_is_fixed
+        this_img_name = ['_L_Blob_fix_' this_img_name];
+    end
     
     % write the image sequence to the export folder
     imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
@@ -244,3 +185,97 @@ end
 
 disp(' ')
 disp('End of scrip')
+
+
+function [data,this_img] = load_fluor_image(img_dir_path,img_paths,i)
+% read the image into ram
+try
+    this_img = imread(fullfile(img_dir_path,img_paths(i).name));
+catch
+    disp(['ERROR: reading image - ' img_paths(i).name])
+    disp(['Image will be treated as corrupted and skipped']);
+
+    try
+        this_img = zeros(size(this_img));
+    catch
+        this_img = zeros(1024,1024);
+    end
+end
+
+% if for some reason the luma,blue, or red difference were saved aswell
+[~,~,z] = size(this_img);
+if z>3
+    this_img = this_img(:,:,1:3);
+end
+
+% Split channles
+[R,G,B] = imsplit(this_img);
+
+% find the dominant color of the fluorescence
+[~,color_choice] = max([sum(R(:)),sum(G(:)),sum(B(:))]);
+
+% Remove 1mm bar from our microscope images
+switch color_choice
+    case 1
+        % red fluorescence
+        data = R - G - B;
+    case 2
+        % green fluorescence
+        data = G - B - R;
+    case 3
+        % blue fluorescence
+        data = B - R - G;
+end
+end
+
+
+function [this_label,this_mask,is_fixed] = large_blob_fix(this_label,this_mask,...
+    data_norm,img_paths,number_worms_to_detect,i)
+
+is_fixed = 0;
+
+% get region profile
+s = regionprops(this_label,'basic');
+
+% determine if the areas are correct
+is_over_large(i) = sum([s.Area]>20000);
+
+% if they are not 
+if is_over_large(i)
+    disp(['Warning: Large blobs detected in - ' img_paths(i).name])
+    disp(['Attempting to fix blobs'])
+
+    % find which blobs are not correct
+    is_over_idx = nonzeros(([s.Area]>20000).*(1:length([s.Area])));
+
+    % get the first mask without the improper blobs
+    first_mask = zeros(size(this_label));
+    for j = 1:max(this_label(:))
+        if ~ismember(j,is_over_idx)
+            first_mask = first_mask + (this_label==j);
+        end
+    end
+
+    % iterate
+    for j = 1:length(is_over_idx)
+        % find the large blob
+        temp_mask = (this_label==is_over_idx(j));
+        % isolate the data
+        temp_data_norm = (temp_mask.*data_norm);
+        % create a new mask 
+        temp_mask2 = temp_data_norm>mean2(nonzeros(temp_data_norm));
+        % add that to the old masks 
+        first_mask = first_mask + temp_mask2;
+
+    end
+    % isolate the 5 largest blobs
+    this_mask = bwareafilt(imfill(first_mask>0,'holes'),...
+        number_worms_to_detect);
+    % label them
+    this_label = bwlabel(this_mask);
+    
+    is_fixed = 1;
+
+end
+        
+end
