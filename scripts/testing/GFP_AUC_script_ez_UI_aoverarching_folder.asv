@@ -7,11 +7,10 @@ warning('off', 'MATLAB:MKDIR:DirectoryExists');
 prompt = {'Enter number of worms to detect: ', ...
     'Show output images - yes(1) - no(0)',...
     'Use large blob fix - yes (1) - no(0)',...
-    'Output name - leave blank for defaults - or enter name for exported_images sub-folder',...
-    'Remove 001,002, etc, from tif names - yes(1) - no(0)'};
+    'Output name - leave blank for defaults - or enter name for exported_images sub-folder'};
 dlgtitle = 'User Inputs for Lightsaver';
 dims = [1 100];
-definput = {'5','0','0','','1'};
+definput = {'5','0','0',''};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 
 if isempty(answer)
@@ -22,7 +21,6 @@ number_worms_to_detect = str2double(answer{1});
 show_output_images = str2double(answer{2});
 use_large_blob_fix = str2double(answer{3});
 output_name = answer{4};
-rename_tifs_choice = str2double(answer{5});
 
 % clean up variables
 clearvars dims definput dlgtitle prompt answer
@@ -59,9 +57,7 @@ mkdir(output_path);
 img_paths = TIF_filepaths;
 [~,sort_idx,~] = natsort(img_paths);
 
-if rename_tifs_choice
-    [img_paths] = rename_tifs(img_paths);
-end
+[img_paths] = rename_tifs(img_paths);
 
 img_paths = img_paths(sort_idx);
 
@@ -260,7 +256,7 @@ is_fixed = 0;
 s = regionprops(this_label,'basic');
 
 % determine if the areas are correct
-is_over_large(i) = sum([s.Area]>25000);
+is_over_large(i) = sum([s.Area]>20000);
 
 % if they are not 
 if is_over_large(i)
@@ -392,7 +388,6 @@ catch
 end
 
 AUC_array = temp_table_array(:,1:5)./temp_table_array(:,6:10);
-AUC_array(isnan(AUC_array))=0;
 
 % get the names and split the names into parts
 img_names = full_table.("Image names");
@@ -464,11 +459,15 @@ if ~isempty(contained_in_all_names)
     for i = 1:length(contained_in_all_names)
         for j = 1:length(condition_names)
             condition_names{j} = erase(condition_names{j},condition_subnames{contained_in_all_names(i)});
-            condition_names{j} = remove_space_underscore_first_last(condition_names{j});
+            if isequal(condition_names{j}(1),' ')
+                condition_names{j} = condition_names{j}(2:end);
+            end
         end
         
         for j = 1:length(condition_names)
-            condition_names{j} = remove_space_underscore_first_last(condition_names{j});
+            if isequal(condition_names{j}(1),' ')
+                condition_names{j} = condition_names{j}(2:end);
+            end
         end
         
     end
@@ -477,10 +476,9 @@ end
 % get all the day names
 day_names = natsort(unique(img_names_only_day));
 
-img_names_spaces = cell(size(img_names_no_day));
+img_names_spaces = img_names_no_day;
 for i = 1:length(img_names)
     img_names_spaces{i} = strrep(img_names_no_day{i},'_',' ');
-    img_names_spaces{i} = remove_space_underscore_first_last(img_names_spaces{i});
 end
 
 % find which conditions correspond to what img 
@@ -502,66 +500,122 @@ end
 % indexable list for variables
 idx_list = [1:length(day_idx)]';
 
-final_array = cell(length(day_names)+1,length(condition_names)+1);
+final_array = cell(length(day_names)+1,numel(AUC_array));
 final_array(2:length(day_names)+1,1) = day_names;
-final_array(1,2:length(condition_names)+1) = condition_names;
 
 % combine 
-for i = 1:length(condition_names)
+for i = 1:length(condition_idx)
     
     this_condition_idx = (condition_idx == i);
     
-    for j = 1:length(day_names)
+    for j = 1:length(day_idx)
                 
         this_day_idx = (day_idx == j);
         
         this_combined_idx = nonzeros(this_day_idx.*this_condition_idx.*idx_list);
         
-        this_AUC_data = AUC_array(this_combined_idx,:);
-        
-        this_AUC_data_flat = reshape(this_AUC_data,[1,numel(this_AUC_data)]);
-        
-        final_array(j+1,i+1) = {this_AUC_data_flat};
+        for k = 1:length(this_combined_idx)
+            
+            this_AUC_data = num2cell(AUC_array(this_combined_idx(k),:));
+            
+            this_final_row = final_array(j+1,:);
+            
+            empty_idx = find(cellfun('isempty', this_final_row),1);
+            
+            final_array(j+1,empty_idx:empty_idx+length(this_AUC_data)-1) = this_AUC_data;
+            
+            if isequal(j,1)
+                final_array(1,empty_idx:empty_idx+length(this_AUC_data)-1) ...
+                    = repmat({condition_names{i}},1,length(this_AUC_data));
+            end
+            
+        end
         
     end
 end
 
 writecell(final_array,fullfile(exp_dir_path,'Analyzed_data.csv'));
 
-disp(['Exported analyzed data to:'])
-disp(fullfile(exp_dir_path,'Analyzed_data.csv'));
+final_array_names = final_array(1,:);
+final_array_names = final_array_names(~cellfun('isempty',final_array_names));
+data_subdivisions = cellstr(string(final_array_names));
 
+mkdir(fullfile(exp_dir_path,'output_figures'));
+mkdir(fullfile(exp_dir_path,'output_figures','per_day'));
+mkdir(fullfile(exp_dir_path,'output_figures','per_condition'));
+
+for i = 1:length(day_names)
+    
+    out_name = strrep([experiment_name '--' day_names{i}],' ','_');
+    
+    this_data = final_array(i+1,2:end);
+    this_data = cell2mat(this_data(~cellfun('isempty',this_data)));
+    
+    hFig = figure('units','normalized','outerposition',[0 0 1 1]);
+    vs = violinplot(this_data, data_subdivisions);
+    ylabel('AUC per condition');
+    title(out_name,'Interpreter','none')
+    drawnow;
+    
+    pause(0.1);
+    saveas(hFig,fullfile(exp_dir_path,'output_figures','per_day',[char(out_name) '.png'])); 
+    
+end
+close all
+
+day_plot_names = strings();
+for i = 1:length(data_subdivisions)
+    
+    for j = 1:length(day_names)
+        day_plot_names(j,i) = join([string(data_subdivisions{i});string(day_names{j})],1);
+    end
+end
+
+for i = 1:length(condition_names)
+    
+    out_name = strrep(condition_names{i},' ','_');
+    
+    this_condition = condition_names{i};
+    
+    this_condition_idx = find(string(data_subdivisions) == string(this_condition));
+    
+    this_data = final_array(2:end,this_condition_idx+1);
+    this_day_plot_names = day_plot_names(:,this_condition_idx);
+    
+    this_data_vector = cell2mat(flip(reshape(rot90(flip(this_data)),1,numel(this_data))));
+    this_day_plot_names_vector = flip(reshape(rot90(flip(this_day_plot_names)),1,numel(this_day_plot_names)));
+    this_data_names = join([repmat(string(condition_names{i}),1,length(day_names));string(day_names)'],' ',1);
+    
+    this_data_names_cell = cell(1,length(this_data_names));
+    for j = 1:length(this_data_names)
+        this_data_names_cell{j} = char(this_data_names(j));
+    end
+    
+    this_data_names_cell = natsort(this_data_names_cell);
+    
+    hFig = figure('units','normalized','outerposition',[0 0 1 1]);
+    vs = violinplot(this_data_vector, this_day_plot_names_vector,'GroupOrder',this_data_names_cell);
+    ylabel('AUC per condition');
+    title(out_name,'Interpreter','none')
+    
+    pause(0.1);
+    saveas(hFig,fullfile(exp_dir_path,'output_figures','per_condition',[char(out_name) '.png'])); 
+    
+end
+close all
+
+disp('All data exported to')
+disp(exp_dir_path);
 end
 
 function [img_paths] = rename_tifs(img_paths)
 
-img_paths2 = img_paths;
-
-for i = 1:length(img_paths2)
+for i = 1:length(img_paths)
     
-    img_paths2{i} = erase(img_paths2{i},{'001',...
-        '002','003','004','005','006','007','008','009',});
+    this_path = img_paths{i};
     
-    if ~isequal(img_paths{i},img_paths2{i})
-        movefile(img_paths{i},img_paths2{i});
-    end
+    
     
 end
-
-img_paths = img_paths2;
-
-end
-
-function out = remove_space_underscore_first_last(in)
-
-out = in;
-
-if isequal(out(1),{' ','_'}) 
-    out = out(2:end);
-end
-if isequal(out(end),{' ','_'}) 
-    out = out(1:end-1);
-end
-
 
 end
