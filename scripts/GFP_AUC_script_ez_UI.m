@@ -111,6 +111,8 @@ for i = 1:length(img_paths)
         [this_label,this_mask,large_blob_is_fixed] = large_blob_fix(this_label,...
             this_mask,data_norm,img_paths,number_worms_to_detect,i);
         
+    else
+        large_blob_is_fixed = 0;
     end
     
     
