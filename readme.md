@@ -34,7 +34,7 @@ this is how the directories (folders) should be setup to use the multiple_sample
 
 ------------------------------------------------------------------------------------------------
 
-# Usage: Data processing an entire experiment (recommended)
+# Usage: Data processing/exporting an entire experiment (recommended)
 > Batching an entire experiment at once, and exporting for easy plotting in Prism(TM) 
 
 1.  Set up data as shown in the above example
