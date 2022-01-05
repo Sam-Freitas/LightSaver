@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<LMSDataContainerHeader Version="2" ApplicationDescription="LMSIOManager" ApplicationVersion="1,3,2701,1">
+  <Element Name="ROS &amp; NAC Response002.xlef" Visibility="1" CopyOption="1" UniqueID="c52e67f9-3118-11ec-9d0e-98fa9b152927">
+    <Data>
+      <Experiment Path="C:\Users\droid\Desktop\Raul Castro\2021-10-19\2021_10_19_13_11_40--ROS &amp; NAC Response002\ROS &amp; NAC Response002.xlef" IsSavedFlag="1">
+        <TimeStamp HighInteger="30917925" LowInteger="2273603313" />
+      </Experiment>
+    </Data>
+    <Memory Size="0" MemoryBlockID="" />
+    <Children>
+      <Reference File=".\metadata\jv1_ngm_ev_gfp_d21_1.xlif" UUID="da45e8c5-3118-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_ev_dapi_d21_1.xlif" UUID="e63da0d4-3118-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_ev_dapi_d21_2.xlif" UUID="fc9230ca-3118-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_ev_gfp_d21_2.xlif" UUID="0295cc54-3119-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_ev_gfp_d21_3.xlif" UUID="0dd35404-3119-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_ev_dapi_d21_3.xlif" UUID="175b5670-3119-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_dapi_d21_1.xlif" UUID="7b73eed2-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_gfp_d21_1.xlif" UUID="7b73eed6-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_gfp_d21_2.xlif" UUID="8b42cafe-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_dapi_d21_2.xlif" UUID="96d7997f-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_dapi_d21_3.xlif" UUID="a68c6147-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_haao-1_gfp_d21_3.xlif" UUID="a68c614b-311a-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_gfp_d21_1.xlif" UUID="8e58f288-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_dapi_d21_1.xlif" UUID="965deef2-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_dapi_d21_2.xlif" UUID="a2c1837a-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_gfp_d21_2.xlif" UUID="aca13a4e-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_gfp_d21_3.xlif" UUID="b7189626-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_ev_dapi_d21_3.xlif" UUID="bef4790c-311c-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_dapi_d21_1.xlif" UUID="1a3e9142-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_gfp_d21_1.xlif" UUID="21eabb5e-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_gfp_d21_2.xlif" UUID="291dd54a-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_dapi_d21_2.xlif" UUID="30607c7f-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_dapi_d21_3.xlif" UUID="3c9b60b7-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_ev_gfp_d21_3.xlif" UUID="3c9b60bb-311e-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_gfp_d21_1.xlif" UUID="eba50b88-311f-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_dapi_d21_1.xlif" UUID="f58587ad-311f-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_dapi_d21_2.xlif" UUID="38f9058b-3120-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_gfp_d21_2.xlif" UUID="3f9ba1c3-3120-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_gfp_d21_3.xlif" UUID="4a73d458-3120-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_ngm_nac_haao-1_dapi_d21_3.xlif" UUID="51976b5a-3120-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_dapi_d21_1.xlif" UUID="9d6abc3c-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_gfp_d21_1.xlif" UUID="a46d802c-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_gfp_d21_2.xlif" UUID="ad81a04f-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_dapi_d21_2.xlif" UUID="b5407dff-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_dapi_d21_3.xlif" UUID="c8c87808-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\jv1_3haa_nac_ev_gfp_d21_3.xlif" UUID="c8c8780c-3125-11ec-9d0e-98fa9b152927" />
+      <Reference File=".\metadata\iomanagerconfiguation.xlif" UUID="c52e67fa-3118-11ec-9d0e-98fa9b152927" />
+    </Children>
+  </Element>
+</LMSDataContainerHeader>
