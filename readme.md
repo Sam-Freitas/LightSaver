@@ -1,8 +1,10 @@
-![LightSaver](img1.jpg)
+# LightSaver
 
 ------------------------------------------------------------------------------------------------
 
-# LightSaver
+![LightSaver](img1.jpg)
+
+------------------------------------------------------------------------------------------------
 
 The LightSaver system is data analysis package for fluorecent C. elegans imaging 
 
