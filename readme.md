@@ -8,7 +8,7 @@ The LightSaver system is data analysis package for fluorecent C. elegans imaging
 
 Developed by Samuel Freitas with help from Raul Castro-Portugez
 
-The University of Arizona, Sutphin Lab MCB, BME
+The University of Arizona, Sutphin Lab Microbiology (MCB), Biomdeical Engineering (BME)
 
 ------------------------------------------------------------------------------------------------
 
