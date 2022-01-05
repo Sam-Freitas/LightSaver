@@ -19,19 +19,19 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 ![Filesetup](img2.jpg)
 
 this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly
+*Note: this script recursively scans all possible files for every .*tiff file)*
+*Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder*
 
   - Overarching experiment (example: Oxidative stress )
   
     - Sub experiment 1 (example: timepoint 1 or 1/1/1995)
     
-      *Note: this script recursively scans all possible files for every .*tiff file)
       - some directory with the *.tiff* files (example: exported images from LEICA 
       
     - ...
    
     - Sub Experiment N (example: timepoint n or 1/N/1995) 
       
-      *Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder
       - some directory with the *.tiff* files (example: exported images from LEICA)
       
 
