@@ -1,14 +1,16 @@
-![LightSaver](img1.jpg)
+# LightSaver
 
 ------------------------------------------------------------------------------------------------
 
-# LightSaver
+![LightSaver](img1.jpg)
+
+------------------------------------------------------------------------------------------------
 
 The LightSaver system is data analysis package for fluorecent C. elegans imaging 
 
 Developed by Samuel Freitas with help from Raul Castro-Portugez
 
-The University of Arizona, Sutphin Lab Microbiology (MCB), Biomdeical Engineering (BME)
+The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineering (BME)
 
 ------------------------------------------------------------------------------------------------
 
@@ -34,7 +36,7 @@ this is how the directories (folders) should be setup to use the multiple_sample
 
 ------------------------------------------------------------------------------------------------
 
-# Usage: Data processing an entire experiment (recommended)
+# Usage: Data processing/exporting an entire experiment (recommended)
 > Batching an entire experiment at once, and exporting for easy plotting in Prism(TM) 
 
 1.  Set up data as shown in the above example
