@@ -24,9 +24,9 @@ this is how the directories (folders) should be setup to use the multiple_sample
 
 *Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder*
 
-**Important: each image should have a descriptive name of what it is (example: skn-1-HT115-EV_replicate_1_D1.tiff,skn-1_replicate_2_D1.tiff)**
+**Important: each image should have a descriptive name of what it is (example: skn-1-HT115-EV_D1_1.tiff,skn-1-HT115-EV_D1_2.tiff)**
 
-**The naming scheme is usually something like exp-name-and-sumbnames_replicateN_dayN.tiff**
+**The naming scheme is usually something like exp-name-and-sumbnames_dayN_replicateN.tiff**
 
 **Important: the exporting function only currently accepts different days as timepoints therefor the last piece in the descriptive name**
 
