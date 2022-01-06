@@ -8,10 +8,11 @@ prompt = {'Enter number of worms to detect: ', ...
     'Show output images - yes(1) - no(0)',...
     'Use large blob fix - yes (1) - no(0)',...
     'Output name - leave blank for defaults - or enter name for exported_images sub-folder',...
-    'Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files'};
+    'Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files',...
+    'Export processed images - yes (1) - no (0)'};
 dlgtitle = 'User Inputs for Lightsaver';
 dims = [1 100];
-definput = {'5','0','0','','1'};
+definput = {'5','0','0','','1','1'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 
 if isempty(answer)
@@ -23,6 +24,7 @@ show_output_images = str2double(answer{2});
 use_large_blob_fix = str2double(answer{3});
 output_name = answer{4};
 rename_tifs_choice = str2double(answer{5});
+export_processed_images = str2double(answer{6});
 
 % clean up variables
 clearvars dims definput dlgtitle prompt answer
@@ -30,13 +32,13 @@ clearvars dims definput dlgtitle prompt answer
 % get current path
 curr_path = pwd;
 
-data_path = fullfile(erase(erase(curr_path,'batching_experiments'),'scripts'),'data');
+data_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'data');
 
 img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
 
 [~,final_save_name,~] = fileparts(img_dir_path);
 
-output_path = fullfile(erase(erase(curr_path,'batching_experiments'),'scripts'),'exported_images');
+output_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'exported_images');
 mkdir(output_path);
 
 if isempty(output_name)
@@ -169,13 +171,18 @@ for i = 1:length(img_paths)
         this_img_name = ['_L_Blob_fix_' this_img_name];
     end
     
-    % write the image sequence to the export folder
-    imwrite(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),...
-        fullfile(output_path,[this_img_name '_img' num2str(i) '.png']))
+    if export_processed_images
+        % insert a corresponding text box to each label
+        annotated_data_output = annotate_masks(labeled_masks,masked_data_output,image_integral_intensities(i,:));
+        
+        % write the image sequence to the export folder
+        imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
+            fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+    end
     
     % show the sequence if necessary
-    if show_output_images == 1
-        imshow(imtile({this_img,rgb_labeled_mask,masked_data_output},'GridSize',[1,3]),[]);
+    if show_output_images
+        imshow(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),[]);
         title([img_names{i} ' -- img ' num2str(i)], 'Interpreter', 'none');
     end
     
@@ -585,5 +592,29 @@ end
 function close_progressbar(progress_bar)
 
 close(progress_bar)
+
+end
+
+function annotated_data_output = annotate_masks(labeled_masks,masked_data_output,data)
+% add a corresponding colored box that has the integrated intensity for
+% each unique label
+num_labels = length(nonzeros(unique(labeled_masks)));
+
+cmap = jet(num_labels);
+
+for i = 1:num_labels
+    
+    this_label = (labeled_masks == i);
+    
+    centroid = regionprops(this_label,'Centroid');
+    
+    centroid = round(centroid.Centroid);
+    
+    masked_data_output = insertText(masked_data_output,centroid,num2str(data(i)),...
+        'BoxColor',cmap(i,:),'AnchorPoint','Center','FontSize',40);
+    
+end
+
+annotated_data_output = masked_data_output;
 
 end
