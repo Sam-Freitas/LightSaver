@@ -1,2 +1,3 @@
 data/*
+scripts/testing/
 !data/placeholder.md
