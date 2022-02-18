@@ -1,31 +1,32 @@
 # LightSaver
 
-------------------------------------------------------------------------------------------------
+
 
 ![LightSaver](img1.jpg)
 
-------------------------------------------------------------------------------------------------
 
+```
 The LightSaver system is data analysis package for fluorecent C. elegans imaging 
 
 Developed by Samuel Freitas with help from Raul Castro-Portugez
 
 The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineering (BME)
-
-------------------------------------------------------------------------------------------------
+```
 
 # Required matlab packages
 
-  'Image Processing Toolbox'
+  ```
+  'Image Processing Toolbox' 
   
   'Computer Vision Toolbox'
+  ```
 
 
 # File parameters setup
 
 ![Filesetup](img2.jpg)
 
-this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
+>this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
 
 *Note: this script recursively scans all possible files for every .tiff file)*
 
@@ -48,8 +49,6 @@ this is how the directories (folders) should be setup to use the multiple_sample
       - some directory with the *.tiff* files (example: exported images from LEICA)
       
 
-------------------------------------------------------------------------------------------------
-
 # Usage: Data processing/exporting an entire experiment (recommended)
 > Batching an entire experiment at once, and exporting for easy plotting in Prism(TM) 
 
@@ -66,8 +65,6 @@ this is how the directories (folders) should be setup to use the multiple_sample
 6.  The script will then display progress bars and where all the data gets exported to
 
 7.  Check the "Exported images" folder to double check output, and rerun with the "Use large blob fix" flag if necessary
-
-------------------------------------------------------------------------------------------------
 
 # Usage: Data processing single sub-experiments individually (not recommended unless data is extremely noisy and "Bad_images_fix.m" must be used)
 
