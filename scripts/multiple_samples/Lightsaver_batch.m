@@ -83,6 +83,8 @@ for i = 1:length(img_paths)
     
     [data,this_img] = load_fluor_image(img_dir_path,img_paths,i);
     
+%     out = ocr_pixel_scale(this_img);
+    
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
     
@@ -173,7 +175,8 @@ for i = 1:length(img_paths)
     
     if export_processed_images
         % insert a corresponding text box to each label
-        annotated_data_output = annotate_masks(labeled_masks,masked_data_output,image_integral_intensities(i,:));
+        annotated_data_output = annotate_masks(...
+            labeled_masks,masked_data_output,image_integral_intensities(i,:));
         
         % write the image sequence to the export folder
         imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
@@ -192,8 +195,12 @@ close_progressbar(progress_bar)
 output_csv = cell(1 + length(img_paths),11);
 
 output_header = {'Image names',...
-    'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity','Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
-    'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area','Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area','Worm 5 (orange) integrated Area'};
+    'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity',...
+    'Worm 3 (green) integrated Intensity',...
+    'Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
+    'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area',...
+    'Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area',...
+    'Worm 5 (orange) integrated Area'};
 
 output_csv(1,:) = output_header;
 output_csv(2:end,2:6) = num2cell(image_integral_intensities);
@@ -337,7 +344,8 @@ if ~isempty(contained_in_all_names)
     for i = 1:length(contained_in_all_names)
         for j = 1:length(img_names)
             
-            img_names{j} = erase(img_names{j},img_subnames{contained_in_all_names(i)});
+            img_names{j} = erase(img_names{j},...
+                img_subnames{contained_in_all_names(i)});
             if isequal(img_names{j}(1),' ') || isequal(img_names{j}(1),'_')
                 img_names{j} = img_names{j}(2:end);
             end
@@ -383,7 +391,8 @@ csv_cells = cell(1,length(CSV_filepaths));
 
 % read in the tables
 for i = 1:numel(CSV_filepaths)
-    csv_table{i}= readtable(CSV_filepaths{i},'VariableNamingRule','preserve'); % Your parsing will be different
+    csv_table{i}= readtable(CSV_filepaths{i},'VariableNamingRule','preserve'); 
+    % Your parsing will be different
 end
 
 % combine the tables
@@ -425,7 +434,8 @@ for i = 1:length(img_names)
     %split the remaining
     img_names_split{i} = strsplit(img_names_no_day{i},{' ','_'});
     % delete empty 
-    img_names_split{i} = img_names_split{i}(~cellfun('isempty',img_names_split{i}));
+    img_names_split{i} = ...
+        img_names_split{i}(~cellfun('isempty',img_names_split{i}));
 end
 
 % split experiment names 
@@ -474,12 +484,15 @@ contained_in_all_names = find(sum(TF) == length(condition_names));
 if ~isempty(contained_in_all_names)
     for i = 1:length(contained_in_all_names)
         for j = 1:length(condition_names)
-            condition_names{j} = erase(condition_names{j},condition_subnames{contained_in_all_names(i)});
-            condition_names{j} = remove_space_underscore_first_last(condition_names{j});
+            condition_names{j} = erase(condition_names{j},...
+                condition_subnames{contained_in_all_names(i)});
+            condition_names{j} = ...
+                remove_space_underscore_first_last(condition_names{j});
         end
         
         for j = 1:length(condition_names)
-            condition_names{j} = remove_space_underscore_first_last(condition_names{j});
+            condition_names{j} = ...
+                remove_space_underscore_first_last(condition_names{j});
         end
         
     end
@@ -616,5 +629,22 @@ for i = 1:num_labels
 end
 
 annotated_data_output = masked_data_output;
+
+end
+
+function out = ocr_pixel_scale(this_img)
+
+ocr_result = ocr(this_img);
+
+ocr_text = ocr_result.Words{1};
+
+ocr_text_box = ocr_result.WordBoundingBoxes;
+
+img_no_text = this_img;
+text_size = [length(ocr_text_box(2):ocr_text_box(2)+ocr_text_box(4)),...
+    length(ocr_text_box(1):ocr_text_box(1)+ocr_text_box(3))];
+img_no_text(ocr_text_box(2):ocr_text_box(2)+ocr_text_box(4),...
+    ocr_text_box(1):ocr_text_box(1)+ocr_text_box(3)) = 0;
+
 
 end
