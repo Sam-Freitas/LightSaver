@@ -249,24 +249,31 @@ if z>3
     this_img = this_img(:,:,1:3);
 end
 
-% Split channles
-[R,G,B] = imsplit(this_img);
+if length(size(this_img)) > 2 % if the image is RGB
+    % Split channles
+    [R,G,B] = imsplit(this_img);
 
-% find the dominant color of the fluorescence
-[~,color_choice] = max([sum(R(:)),sum(G(:)),sum(B(:))]);
+    % find the dominant color of the fluorescence
+    [~,color_choice] = max([sum(R(:)),sum(G(:)),sum(B(:))]);
 
-% Remove 1mm bar from our microscope images
-switch color_choice
-    case 1
-        % red fluorescence
-        data = R - G - B;
-    case 2
-        % green fluorescence
-        data = G - B - R;
-    case 3
-        % blue fluorescence
-        data = B - R - G;
+    % Remove 1mm bar from our microscope images
+    switch color_choice
+        case 1
+            % red fluorescence
+            data = R - G - B;
+        case 2
+            % green fluorescence
+            data = G - B - R;
+        case 3
+            % blue fluorescence
+            data = B - R - G;
+    end
+else % else the image is grayscale
+    data = this_img;
+    % get rid of the scale bar
+%     data(end-100:end,1:256) = 0;
 end
+
 end
 
 
