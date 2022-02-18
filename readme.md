@@ -65,6 +65,8 @@ this is how the directories (folders) should be setup to use the multiple_sample
 
 6.  The script will then display progress bars and where all the data gets exported to
 
+7.  Check the "Exported images" folder to double check output, and rerun with the "Use large blob fix" flag if necessary
+
 ------------------------------------------------------------------------------------------------
 
 # Usage: Data processing single sub-experiments individually (not recommended unless data is extremely noisy and "Bad_images_fix.m" must be used)
