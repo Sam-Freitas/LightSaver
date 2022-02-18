@@ -14,6 +14,12 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 ------------------------------------------------------------------------------------------------
 
+# Required matlab packages
+
+  'Image Processing Toolbox'
+  'Computer Vision Toolbox'
+
+
 # File parameters setup
 
 ![Filesetup](img2.jpg)
