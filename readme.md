@@ -25,7 +25,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 ![Filesetup](img2.jpg)
 
-this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly
+this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
 
 *Note: this script recursively scans all possible files for every .tiff file)*
 
