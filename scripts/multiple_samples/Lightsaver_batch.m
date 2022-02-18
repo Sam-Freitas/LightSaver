@@ -83,7 +83,8 @@ for i = 1:length(img_paths)
     
     [data,this_img] = load_fluor_image(img_dir_path,img_paths,i);
     
-%     out = ocr_pixel_scale(this_img);
+    % testing to measure scale from exported image with ocr
+%     [out,this_measurement] = ocr_pixel_scale(this_img);
     
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
@@ -632,7 +633,9 @@ annotated_data_output = masked_data_output;
 
 end
 
-function out = ocr_pixel_scale(this_img)
+function [out,this_measurement] = ocr_pixel_scale(this_img)
+
+this_img = rgb2gray(this_img);
 
 ocr_result = ocr(this_img);
 
@@ -640,11 +643,13 @@ ocr_text = ocr_result.Words{1};
 
 ocr_text_box = ocr_result.WordBoundingBoxes;
 
-img_no_text = this_img;
-text_size = [length(ocr_text_box(2):ocr_text_box(2)+ocr_text_box(4)),...
-    length(ocr_text_box(1):ocr_text_box(1)+ocr_text_box(3))];
-img_no_text(ocr_text_box(2):ocr_text_box(2)+ocr_text_box(4),...
+this_img(ocr_text_box(2):ocr_text_box(2)+ocr_text_box(4),...
     ocr_text_box(1):ocr_text_box(1)+ocr_text_box(3)) = 0;
 
+this_line = this_img(end-5:end,1:256) == 255;
+this_scale = str2double(ocr_text(1:end-2));
+this_measurement = ocr_text(end-2:end);
+
+out = (this_scale/sum(this_line(:))) ^ 2;
 
 end
