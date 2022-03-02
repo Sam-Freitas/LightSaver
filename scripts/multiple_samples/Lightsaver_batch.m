@@ -9,10 +9,11 @@ prompt = {'Enter number of worms to detect: ', ...
     'Use large blob fix - yes (1) - no(0)',...
     'Output name - leave blank for defaults - or enter name for exported_images sub-folder',...
     'Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files',...
-    'Export processed images - yes (1) - no (0)'};
+    'Export processed images - yes (1) - no (0)',...
+    'Automaic data analysis and export - yes (1) - no (0)'};
 dlgtitle = 'User Inputs for Lightsaver';
 dims = [1 100];
-definput = {'5','0','0','','1','1'};
+definput = {'5','0','0','','1','1','1'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 
 if isempty(answer)
@@ -25,6 +26,7 @@ use_large_blob_fix = str2double(answer{3});
 output_name = answer{4};
 rename_tifs_choice = str2double(answer{5});
 export_processed_images = str2double(answer{6});
+data_analysis_and_export_bool = str2double(answer{7});
 
 % clean up variables
 clearvars dims definput dlgtitle prompt answer
@@ -180,8 +182,20 @@ for i = 1:length(img_paths)
             labeled_masks,masked_data_output,image_integral_intensities(i,:));
         
         % write the image sequence to the export folder
-        imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
-            fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+        try
+            error()
+            imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
+                fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+        catch
+            t1 = cat(3,uint8(255*double(this_img)/double(max(this_img(:)))),...
+                uint8(255*double(this_img)/double(max(this_img(:)))),...
+                uint8(255*double(this_img)/double(max(this_img(:)))));
+            t2 = rgb_labeled_mask;
+            t3 = uint8(255*annotated_data_output);
+            temp_img = [t1,t2,t3];
+            
+            imwrite(temp_img,fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+        end
     end
     
     % show the sequence if necessary
@@ -219,7 +233,9 @@ else
     writetable(T,fullfile(data_path,[final_save_name '.csv']))
 end
 
-data_analysis_and_export_function(img_dir_path)
+if data_analysis_and_export_bool
+    data_analysis_and_export_function(img_dir_path)
+end
 
 disp(' ')
 disp('End of scrip')
