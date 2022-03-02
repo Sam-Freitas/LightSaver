@@ -57,6 +57,10 @@ TIFidx = ismember(allExts,'tif');    % Search ext for "TIF" at the end
 TIF_filepaths = {message(TIFidx).Name}';  % Use CSVidx to list all paths.
 fprintf('There are %i files with *.TIF exts.\n',numel(TIF_filepaths));
 
+if isempty(TIF_filepaths)
+    error('No images with the .tif file extensions found')
+end
+
 output_path = fullfile(output_path,output_name);
 mkdir(output_path);
 
