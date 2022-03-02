@@ -191,9 +191,13 @@ for i = 1:length(img_paths)
             imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
                 fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
         catch
-            t1 = cat(3,uint8(255*double(this_img)/double(max(this_img(:)))),...
-                uint8(255*double(this_img)/double(max(this_img(:)))),...
-                uint8(255*double(this_img)/double(max(this_img(:)))));
+            if length(size(this_img)) < 3
+                t1 = cat(3,uint8(255*double(this_img)/double(max(this_img(:)))),...
+                    uint8(255*double(this_img)/double(max(this_img(:)))),...
+                    uint8(255*double(this_img)/double(max(this_img(:)))));
+            else
+                t1 = uint8(255*double(this_img)/double(max(this_img(:))));
+            end
             t2 = rgb_labeled_mask;
             t3 = uint8(255*annotated_data_output);
             temp_img = [t1,t2,t3];
