@@ -187,7 +187,6 @@ for i = 1:length(img_paths)
         
         % write the image sequence to the export folder
         try
-            error()
             imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
                 fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
         catch
