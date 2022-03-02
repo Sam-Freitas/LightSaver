@@ -587,8 +587,12 @@ img_paths_new = img_paths;
 
 for i = 1:length(img_paths)
     
-    img_paths_new{i} = erase(img_paths_new{i},{'001',...
+    [filepath,name,ext] = fileparts(img_paths_new{i});
+    
+    new_name = erase(name,{'001',...
         '002','003','004','005','006','007','008','009',});
+    
+    img_paths_new{i} = fullfile(filepath,[name ext]);
     
     if ~isequal(img_paths{i},img_paths_new{i})
         movefile(img_paths{i},img_paths_new{i});
