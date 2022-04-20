@@ -10,10 +10,11 @@ prompt = {'Enter number of worms to detect: ', ...
     'Output name - leave blank for defaults - or enter name for exported_images sub-folder',...
     'Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files',...
     'Export processed images - yes (1) - no (0)',...
-    'Automaic data analysis and export - yes (1) - no (0)'};
+    'Automaic data analysis and export - yes (1) - no (0)',...
+    'Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0)'};
 dlgtitle = 'User Inputs for Lightsaver';
 dims = [1 100];
-definput = {'5','0','0','','1','1','1'};
+definput = {'5','0','0','','1','1','1','0'};
 answer = inputdlg(prompt,dlgtitle,dims,definput);
 
 if isempty(answer)
@@ -27,6 +28,7 @@ output_name = answer{4};
 rename_tifs_choice = str2double(answer{5});
 export_processed_images = str2double(answer{6});
 data_analysis_and_export_bool = str2double(answer{7});
+experimental_name_has_conditions_in_it = str2double(answer{8});
 
 % clean up variables
 clearvars dims definput dlgtitle prompt answer
@@ -131,6 +133,16 @@ for i = 1:length(img_paths)
     
     % if there are many blobs still detected only take the 5 largest
     if max(this_label(:))>number_worms_to_detect
+        disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_names{i}])
+        disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
+        
+        E = entropyfilt(data_norm);
+        
+        this_mask = bwareafilt(this_label>0,number_worms_to_detect);
+        
+    end
+    
+    if max(this_label(:))<number_worms_to_detect
         disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_names{i}])
         disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
         
@@ -241,7 +253,7 @@ else
 end
 
 if data_analysis_and_export_bool
-    data_analysis_and_export_function(img_dir_path)
+    data_analysis_and_export_function(img_dir_path,experimental_name_has_conditions_in_it)
 end
 
 disp(' ')
@@ -399,7 +411,7 @@ end
 end
 
 
-function data_analysis_and_export_function(exp_dir_path)
+function data_analysis_and_export_function(exp_dir_path,experimental_name_has_conditions_in_it)
 
 % get exp name
 [~,experiment_name,~] = fileparts(exp_dir_path);
@@ -462,6 +474,11 @@ for i = 1:length(img_names)
     img_names_no_day{i}(D_idx:end) = [];
     % get only days 
     img_names_only_day{i} = img_names{i}(D_to_undx);
+    % if there isnt a channel output (ch00) or repeat ( D7_repeat_) then
+    % this will be empty 
+    if isempty(img_names_only_day{i})
+        img_names_only_day{i} = img_names{i}(D_idx:end);
+    end
     %split the remaining
     img_names_split{i} = strsplit(img_names_no_day{i},{' ','_'});
     % delete empty 
@@ -470,7 +487,7 @@ for i = 1:length(img_names)
 end
 
 % split experiment names 
-experiment_name_parts = strsplit(experiment_name,{' ','_'});
+experiment_name_parts = strsplit(experiment_name,{' ','_','-'});
 
 % find if part numerical 
 only_numerical_name_parts = str2double(experiment_name_parts);
@@ -481,20 +498,33 @@ only_numerical_name_parts = logical(only_numerical_name_parts);
 experiment_name_parts(only_numerical_name_parts) = [];
 
 % get rid of parts that are contained in the experiment 
-img_names_split2 = cell(1,length(img_names_split));
-for i = 1:length(img_names_split)
-    
-    % find parts that are already from the experiment name splits 
-    TF = contains(img_names_split{i},experiment_name_parts,'IgnoreCase',true);
-    
-    % join the rest 
-    img_names_split2{i} = char(join(img_names_split{i}(~TF)));
-    
+
+% default is that 
+if ~experimental_name_has_conditions_in_it 
+    img_names_split2 = cell(1,length(img_names_split));
+    for i = 1:length(img_names_split)
+
+        % find parts that are already from the experiment name splits 
+        % this was changed from true to false
+        TF = contains(img_names_split{i},experiment_name_parts,'IgnoreCase',false);
+
+        % join the rest 
+        img_names_split2{i} = char(join(img_names_split{i}(~TF)));
+
+    end
+else
+    img_names_split2 = cell(1,length(img_names_split));
+    for i = 1:length(img_names_split)
+        % join the rest 
+        img_names_split2{i} = char(join(img_names_split{i}));
+    end
 end
 
 % get all the condition names
 condition_names = unique(img_names_split2)';
-
+% remove empty condition names (dont know exactly why this can happen)
+% condition_names = condition_names(~cellfun('isempty',condition_names));
+% 
 % get all condition subnames
 condition_subnames = {};
 for i = 1:length(condition_names)
