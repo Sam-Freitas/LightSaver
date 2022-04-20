@@ -506,7 +506,7 @@ if ~experimental_name_has_conditions_in_it
 
         % find parts that are already from the experiment name splits 
         % this was changed from true to false
-        TF = contains(img_names_split{i},experiment_name_parts,'IgnoreCase',false);
+        TF = contains(img_names_split{i},experiment_name_parts,'IgnoreCase',true);
 
         % join the rest 
         img_names_split2{i} = char(join(img_names_split{i}(~TF)));
