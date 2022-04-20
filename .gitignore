@@ -1,4 +1,5 @@
 data/*
+*.jpg
 scripts/testing/
 !data/placeholder.md
 .DS_Store
