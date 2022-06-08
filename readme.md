@@ -34,7 +34,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 **Important: each image should have a descriptive name of what it is (example: skn-1-HT115-EV_D1_1.tiff,skn-1-HT115-EV_D1_2.tiff). The naming scheme is usually something like exp-name-and-sumbnames_dayN_replicateN.tiff**
 
-**Important: The image names are EXTREMELY important and SHOULD NOT CONTAIN ANY EXTRA INFORMATION besides what is said above (exp-name-and-sumbnames_dayN_replicateN.tiff). If something is repeated across every image it will be removed from the final image names, if RNAi (NGM, NCR, or anything) is repeated across all the image names it WILL be removed, please name experiments accordingly 
+**Important: The image names are EXTREMELY important and SHOULD NOT CONTAIN ANY EXTRA INFORMATION besides what is said above (exp-name-and-sumbnames_dayN_replicateN.tiff). If something is repeated across every image it will be removed from the final image names, if RNAi (NGM, NCR, or anything) is repeated across all the image names it WILL be removed, please name experiments accordingly**
 
 **Important: the exporting function only currently accepts different days as timepoints therefor the last piece in the descriptive name**
 
