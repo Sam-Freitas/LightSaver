@@ -374,6 +374,20 @@ img_subnames = unique(img_subnames);
 
 img_subnames(~isnan(str2double(img_subnames))) = [];
 
+% check to see if the img_subnames contains D(N) data
+day_idx_marker = ones(size(img_subnames));
+for i = 1:length(img_subnames)
+    this_subname = img_subnames{i};
+    try
+        if isequal(this_subname(1),'D') && isnumeric(str2double(this_subname(2:end))) && ~isnan(str2double(this_subname(2:end)))
+            day_idx_marker(i) = 0;
+        end
+    catch
+        % single characters ignored
+    end
+end
+img_subnames = img_subnames(logical(day_idx_marker));
+
 % find if subname is contained in ALL the names
 for i = 1:length(img_names)
     for j = 1:length(img_subnames)
@@ -381,25 +395,34 @@ for i = 1:length(img_names)
     end
 end
 
-contained_in_all_names = find(sum(TF) == length(img_names));
+contained_in_all_names = find(sum(TF,1) == length(img_names));
+subnames_in_all_names = img_subnames(contained_in_all_names);
 
 if ~isempty(contained_in_all_names)
     for i = 1:length(contained_in_all_names)
+        
+        subname_to_erase = img_subnames{contained_in_all_names(i)};
+        
         for j = 1:length(img_names)
-            
-            img_names{j} = erase(img_names{j},...
-                img_subnames{contained_in_all_names(i)});
+            img_names{j} = erase(img_names{j},subname_to_erase);
+            % remove leading space or underscore
             if isequal(img_names{j}(1),' ') || isequal(img_names{j}(1),'_')
                 img_names{j} = img_names{j}(2:end);
             end
-            
+            % remove ending space or underscore
             if isequal(img_names{j}(end),' ') || isequal(img_names{j}(end),'_')
                 img_names{j} = img_names{j}(1:end-1);
             end
             
         end
         
+        
+        
         for j = 1:length(img_names)
+            
+            img_names{j} = replace(img_names{j},'__','_');
+            img_names{j} = replace(img_names{j},'  ',' ');
+            
             if isequal(img_names{j}(end),' ') || isequal(img_names{j}(end),'_')
                 img_names{j} = img_names{j}(1:end-1);
             end
@@ -449,7 +472,7 @@ end
 
 try
     temp_table_array = table2array(full_table(:,2:end));
-    disp('data not detected on column 2, trying column 6')
+%     disp('data not detected on column 2, trying column 6')
 catch
     temp_table_array = table2array(full_table(:,6:end));
 end
