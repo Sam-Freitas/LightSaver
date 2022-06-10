@@ -30,6 +30,15 @@ export_processed_images = str2double(answer{6});
 data_analysis_and_export_bool = str2double(answer{7});
 experimental_name_has_conditions_in_it = str2double(answer{8});
 
+% this is for the exported images 
+% faster is with the jpg format -> 0 but less quality on the images
+high_quality_output = 1;
+if high_quality_output
+    output_img_format = '.png';
+else
+    output_img_format = '.jpg';
+end
+
 % clean up variables
 clearvars dims definput dlgtitle prompt answer
 
@@ -92,7 +101,7 @@ for i = 1:length(img_paths)
     [data,this_img] = load_fluor_image(img_dir_path,img_paths,i);
     
     % testing to measure scale from exported image with ocr
-%     [out,this_measurement] = ocr_pixel_scale(this_img);
+    %     [out,this_measurement] = ocr_pixel_scale(this_img);
     
     % this assumes that all the data is in the uint8 format
     data_norm = double(data)/255;
@@ -185,7 +194,7 @@ for i = 1:length(img_paths)
     rgb_labeled_mask = label2rgb(labeled_masks,'jet','k');
     % get the masked data ready for export
     masked_data_output = masked_data/max(masked_data(:));
-
+    
     [~,this_img_name,~] = fileparts(img_names{i});
     
     if large_blob_is_fixed
@@ -200,7 +209,7 @@ for i = 1:length(img_paths)
         % write the image sequence to the export folder
         try
             imwrite(imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]),...
-                fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+                fullfile(output_path,[num2str(i) '_' this_img_name output_img_format]))
         catch
             if length(size(this_img)) < 3
                 t1 = cat(3,uint8(255*double(this_img)/double(max(this_img(:)))),...
@@ -213,7 +222,7 @@ for i = 1:length(img_paths)
             t3 = uint8(255*annotated_data_output);
             temp_img = [t1,t2,t3];
             
-            imwrite(temp_img,fullfile(output_path,[num2str(i) '_' this_img_name '.jpg']))
+            imwrite(temp_img,fullfile(output_path,[num2str(i) '_' this_img_name output_img_format]))
         end
     end
     
@@ -270,7 +279,7 @@ try
 catch
     disp(['ERROR: reading image - ' this_img_name])
     disp(['Image will be treated as corrupted and skipped']);
-
+    
     try
         this_img = zeros(size(this_img));
     catch
@@ -287,10 +296,10 @@ end
 if length(size(this_img)) > 2 % if the image is RGB
     % Split channles
     [R,G,B] = imsplit(this_img);
-
+    
     % find the dominant color of the fluorescence
     [~,color_choice] = max([sum(R(:)),sum(G(:)),sum(B(:))]);
-
+    
     % Remove 1mm bar from our microscope images
     switch color_choice
         case 1
@@ -306,7 +315,7 @@ if length(size(this_img)) > 2 % if the image is RGB
 else % else the image is grayscale
     data = this_img;
     % get rid of the scale bar
-%     data(end-100:end,1:256) = 0;
+    %     data(end-100:end,1:256) = 0;
 end
 
 end
@@ -323,14 +332,14 @@ s = regionprops(this_label,'basic');
 % determine if the areas are correct
 is_over_large(i) = sum([s.Area]>25000);
 
-% if they are not 
+% if they are not
 if is_over_large(i)
     disp(['Warning: Large blobs detected in - ' img_names{i}])
     disp(['Attempting to fix blobs'])
-
+    
     % find which blobs are not correct
     is_over_idx = nonzeros(([s.Area]>20000).*(1:length([s.Area])));
-
+    
     % get the first mask without the improper blobs
     first_mask = zeros(size(this_label));
     for j = 1:max(this_label(:))
@@ -338,18 +347,18 @@ if is_over_large(i)
             first_mask = first_mask + (this_label==j);
         end
     end
-
+    
     % iterate
     for j = 1:length(is_over_idx)
         % find the large blob
         temp_mask = (this_label==is_over_idx(j));
         % isolate the data
         temp_data_norm = (temp_mask.*data_norm);
-        % create a new mask 
+        % create a new mask
         temp_mask2 = temp_data_norm>mean2(nonzeros(temp_data_norm));
-        % add that to the old masks 
+        % add that to the old masks
         first_mask = first_mask + temp_mask2;
-
+        
     end
     % isolate the 5 largest blobs
     this_mask = bwareafilt(imfill(first_mask>0,'holes'),...
@@ -358,9 +367,9 @@ if is_over_large(i)
     this_label = bwlabel(this_mask);
     
     is_fixed = 1;
-
+    
 end
-        
+
 end
 
 function [img_names] = clean_img_names(img_paths,img_names)
@@ -439,7 +448,7 @@ function data_analysis_and_export_function(exp_dir_path,experimental_name_has_co
 % get exp name
 [~,experiment_name,~] = fileparts(exp_dir_path);
 
-% this is all to find the data.csv's 
+% this is all to find the data.csv's
 [~,message,~] = fileattrib(fullfile(exp_dir_path,'*'));
 
 fprintf('\nThere are %i total files & folders in the overarching folder.\n',numel(message));
@@ -457,7 +466,7 @@ csv_cells = cell(1,length(CSV_filepaths));
 
 % read in the tables
 for i = 1:numel(CSV_filepaths)
-    csv_table{i}= readtable(CSV_filepaths{i},'VariableNamingRule','preserve'); 
+    csv_table{i}= readtable(CSV_filepaths{i},'VariableNamingRule','preserve');
     % Your parsing will be different
 end
 
@@ -472,7 +481,7 @@ end
 
 try
     temp_table_array = table2array(full_table(:,2:end));
-%     disp('data not detected on column 2, trying column 6')
+    %     disp('data not detected on column 2, trying column 6')
 catch
     temp_table_array = table2array(full_table(:,6:end));
 end
@@ -491,28 +500,28 @@ for i = 1:length(img_names)
     % find last D
     D_idx = find(char(img_names{i})=='D',1,'last');
     underscore_idx = find(char(img_names{i})=='_');
-
+    
     D_to_undx = D_idx:(underscore_idx(find(underscore_idx>D_idx,1,'first'))-1);
     % rid of last D
     img_names_no_day{i}(D_idx:end) = [];
-    % get only days 
+    % get only days
     img_names_only_day{i} = img_names{i}(D_to_undx);
     % if there isnt a channel output (ch00) or repeat ( D7_repeat_) then
-    % this will be empty 
+    % this will be empty
     if isempty(img_names_only_day{i})
         img_names_only_day{i} = img_names{i}(D_idx:end);
     end
     %split the remaining
     img_names_split{i} = strsplit(img_names_no_day{i},{' ','_'});
-    % delete empty 
+    % delete empty
     img_names_split{i} = ...
         img_names_split{i}(~cellfun('isempty',img_names_split{i}));
 end
 
-% split experiment names 
+% split experiment names
 experiment_name_parts = strsplit(experiment_name,{' ','_','-'});
 
-% find if part numerical 
+% find if part numerical
 only_numerical_name_parts = str2double(experiment_name_parts);
 only_numerical_name_parts(isnan(only_numerical_name_parts)) = 0;
 
@@ -520,25 +529,25 @@ only_numerical_name_parts = logical(only_numerical_name_parts);
 
 experiment_name_parts(only_numerical_name_parts) = [];
 
-% get rid of parts that are contained in the experiment 
+% get rid of parts that are contained in the experiment
 
-% default is that 
-if ~experimental_name_has_conditions_in_it 
+% default is that
+if ~experimental_name_has_conditions_in_it
     img_names_split2 = cell(1,length(img_names_split));
     for i = 1:length(img_names_split)
-
-        % find parts that are already from the experiment name splits 
+        
+        % find parts that are already from the experiment name splits
         % this was changed from true to false
         TF = contains(img_names_split{i},experiment_name_parts,'IgnoreCase',true);
-
-        % join the rest 
+        
+        % join the rest
         img_names_split2{i} = char(join(img_names_split{i}(~TF)));
-
+        
     end
 else
     img_names_split2 = cell(1,length(img_names_split));
     for i = 1:length(img_names_split)
-        % join the rest 
+        % join the rest
         img_names_split2{i} = char(join(img_names_split{i}));
     end
 end
@@ -547,7 +556,7 @@ end
 condition_names = unique(img_names_split2)';
 % remove empty condition names (dont know exactly why this can happen)
 % condition_names = condition_names(~cellfun('isempty',condition_names));
-% 
+%
 % get all condition subnames
 condition_subnames = {};
 for i = 1:length(condition_names)
@@ -591,7 +600,7 @@ for i = 1:length(img_names)
     img_names_spaces{i} = remove_space_underscore_first_last(img_names_spaces{i});
 end
 
-% find which conditions correspond to what img 
+% find which conditions correspond to what img
 condition_idx = zeros(1,length(img_names_spaces))';
 for i = 1:length(condition_names)
     
@@ -614,13 +623,13 @@ final_array = cell(length(day_names)+1,length(condition_names)+1);
 final_array(2:length(day_names)+1,1) = day_names;
 final_array(1,2:length(condition_names)+1) = condition_names;
 
-% combine 
+% combine
 for i = 1:length(condition_names)
     
     this_condition_idx = (condition_idx == i);
     
     for j = 1:length(day_names)
-                
+        
         this_day_idx = (day_idx == j);
         
         this_combined_idx = nonzeros(this_day_idx.*this_condition_idx.*idx_list);
@@ -668,10 +677,10 @@ function out = remove_space_underscore_first_last(in)
 
 out = in;
 
-if isequal(out(1),{' ','_'}) 
+if isequal(out(1),{' ','_'})
     out = out(2:end);
 end
-if isequal(out(end),{' ','_'}) 
+if isequal(out(end),{' ','_'})
     out = out(1:end-1);
 end
 
@@ -707,12 +716,14 @@ for i = 1:num_labels
     
     this_label = (labeled_masks == i);
     
-    centroid = regionprops(this_label,'Centroid');
+    s = regionprops(this_label,'Centroid','PixelList');
+        
+    to_plot(1) = mean(s.PixelList(:,1));
+    to_plot(2) = min(s.PixelList(:,2));
     
-    centroid = round(centroid.Centroid);
-    
-    masked_data_output = insertText(masked_data_output,centroid,num2str(data(i)),...
-        'BoxColor',cmap(i,:),'AnchorPoint','Center','FontSize',40);
+    centroid = round(s.Centroid);
+    masked_data_output = insertText(masked_data_output,to_plot,num2str(data(i)),...
+        'BoxColor',cmap(i,:),'AnchorPoint','CenterBottom','FontSize',26);
     
 end
 
