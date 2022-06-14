@@ -28,7 +28,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 >this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
 
-*Note: this script recursively scans all possible files for every .tiff file)*
+*Note: this script recursively scans all possible files for every .tiff file and will sort them by timepoint (specifically the nomenclature DN (Day N)*
 
 *Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder*
 
