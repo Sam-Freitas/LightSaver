@@ -66,7 +66,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 6.  The script will then display progress bars and where all the data gets exported to
 
-7.  Check the "Exported images" folder to double check output, and rerun with the "Use large blob fix" flag if necessary
+7.  Check the "Exported images" folder (wherever the LightSaver directory got saved to, most likely in documents/github/lightsaver) to double check output, and rerun with the "Use large blob fix" flag if necessary
 
 # Usage: Data processing single sub-experiments individually (not recommended unless data is extremely noisy and "Bad_images_fix.m" must be used)
 
