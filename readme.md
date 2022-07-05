@@ -28,7 +28,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 >this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
 
-*Note: this script recursively scans all possible files for every .tiff file)*
+*Note: this script recursively scans all possible files for every .tiff file and will sort them by timepoint (specifically the nomenclature DN (Day N)*
 
 *Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder*
 
@@ -66,7 +66,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 6.  The script will then display progress bars and where all the data gets exported to
 
-7.  Check the "Exported images" folder to double check output, and rerun with the "Use large blob fix" flag if necessary
+7.  Check the "Exported images" folder (wherever the LightSaver directory got saved to, most likely in documents/github/lightsaver) to double check output, and rerun with the "Use large blob fix" flag if necessary
 
 # Usage: Data processing single sub-experiments individually (not recommended unless data is extremely noisy and "Bad_images_fix.m" must be used)
 
