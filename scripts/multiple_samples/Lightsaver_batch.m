@@ -312,10 +312,17 @@ if length(size(this_img)) > 2 % if the image is RGB
             % blue fluorescence
             data = B - R - G;
     end
+    
+    if sum(data(:)) < 1000
+        data = this_img(:,:,color_choice);
+            % get rid of the scale bar
+        data(end-100:end,1:256) = 0;
+    end
+    
 else % else the image is grayscale
     data = this_img;
     % get rid of the scale bar
-    %     data(end-100:end,1:256) = 0;
+    data(end-100:end,1:256) = 0;
 end
 
 end
