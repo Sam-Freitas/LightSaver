@@ -25,31 +25,32 @@ num_labels = max(new_labels(:));
 out = cell(1,num_labels);
 
 for o = 1:num_labels
-    this_label = (new_labels == o);
-    this_masked_data = (this_label>0).*masked_image;
-%     IM = uint8(rescale(this_label.*gr)*255);
-
-    % get single skel line and perimeter
-    single_line = skels.*(this_label);
-
-    num_points = sum(nonzeros(single_line>0));
-
-    % find endpoints for finding where to start
-    endpts_img = bwmorph(single_line,'endpoints');
-    endpts_img = bwareafilt(endpts_img,[1,1]);
-
-    % find starting point by closesnt endpoint to 0,0
-    [x,y] = find(endpts_img>0);
-    xyz = [x,y, y+x];
-    endpts = sortrows(xyz,[3,1,2]);
-    endpts = endpts(:,[1,2]);
-    starting_point = endpts(1,:);
-
-    % this will be added on to5
-    sorted_points = starting_point;
-    temp_line = single_line; % slowly gets deleted
 
     try
+        this_label = (new_labels == o);
+        this_masked_data = (this_label>0).*masked_image;
+        %     IM = uint8(rescale(this_label.*gr)*255);
+
+        % get single skel line and perimeter
+        single_line = skels.*(this_label);
+
+        num_points = sum(nonzeros(single_line>0));
+
+        % find endpoints for finding where to start
+        endpts_img = bwmorph(single_line,'endpoints');
+        endpts_img = bwareafilt(endpts_img,[1,1]);
+
+        % find starting point by closesnt endpoint to 0,0
+        [x,y] = find(endpts_img>0);
+        xyz = [x,y, y+x];
+        endpts = sortrows(xyz,[3,1,2]);
+        endpts = endpts(:,[1,2]);
+        starting_point = endpts(1,:);
+
+        % this will be added on to5
+        sorted_points = starting_point;
+        temp_line = single_line; % slowly gets deleted
+    
         count = 0;
         for i = 1:num_points
             count = count + 1;

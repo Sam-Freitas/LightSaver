@@ -100,7 +100,7 @@ for i = 1:length(img_paths)
     
     progress_bar = progressbar_function(i,length(img_paths),progress_bar);
     
-    [data,this_img] = load_fluor_image(img_dir_path,img_paths,i);
+    [data,this_img,color_choice] = load_fluor_image(img_dir_path,img_paths,i);
     
     % testing to measure scale from exported image with ocr
     %     [out,this_measurement] = ocr_pixel_scale(this_img);
@@ -209,14 +209,28 @@ for i = 1:length(img_paths)
         % insert a corresponding text box to each label
         annotated_data_output = annotate_masks(...
             labeled_masks,masked_data_output,image_integral_intensities(i,:));
+
+        is_uint8 = isa(data,'uint8');
+        is_uint16 = isa(data,'uint16');
+
+        if is_uint8
+            normalizer = 255;
+        else
+            normalizer = 65536;
+        end
         
         % write the image sequence to the export folder
         try
             if export_straightened_worms
                 t4 = straighten_worms(labeled_masks,data,'multiple',10,75,this_img_name); 
+                for j = 1:length(t4)
+                    t4{j} = gray_worm_image_to_color(t4{j},color_choice);
+                    t4{j} = outline_colored_worm(t4{j},color_choice);
+                end
                 t5 = imtile(t4,'GridSize',[NaN,1]);
+                t5 = t5/normalizer;
                 temp_img = ...
-                    imtile({this_img,rgb_labeled_mask,annotated_data_output,rescale(t5)},'GridSize',[2,2]);
+                    imtile({this_img,rgb_labeled_mask,annotated_data_output,t5},'GridSize',[2,2]);
             else
                 temp_img = ...
                     imtile({this_img,rgb_labeled_mask,annotated_data_output},'GridSize',[1,3]);
@@ -236,8 +250,14 @@ for i = 1:length(img_paths)
 
             if export_straightened_worms
                 t4 = straighten_worms(labeled_masks,data,'multiple',10,75,this_img_name); 
+                for j = 1:length(t4)
+                    t4{j} = gray_worm_image_to_color(t4{j},color_choice);
+                    t4{j} = outline_colored_worm(t4{j},color_choice);
+                end
                 t5 = imtile(t4,'GridSize',[NaN,1]);
-                temp_img = imtile({t1,t2,t3,rescale(t5)},'Gridsize',[2,2]);
+%                 t5 = gray_worm_image_to_color(t5,color_choice);
+                t5 = t5/normalizer;
+                temp_img = imtile({t1,t2,t3,t5},'Gridsize',[2,2]);
             else
                 temp_img = [t1,t2,t3];
             end
@@ -246,7 +266,7 @@ for i = 1:length(img_paths)
         end
 
         if export_straightened_worms
-             export_single_worm_images(t4,this_img_name,output_path,this_img)
+             export_single_worm_images(t4,this_img_name,output_path,this_img,color_choice)
         end
 
     end
@@ -259,43 +279,43 @@ for i = 1:length(img_paths)
     
 end
 close_progressbar(progress_bar)
-
-output_csv = cell(1 + length(img_paths),11);
-
-output_header = {'Image names',...
-    'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity',...
-    'Worm 3 (green) integrated Intensity',...
-    'Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
-    'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area',...
-    'Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area',...
-    'Worm 5 (orange) integrated Area'};
-
-output_csv(1,:) = output_header;
-output_csv(2:end,2:6) = num2cell(image_integral_intensities);
-output_csv(2:end,7:11) = num2cell(image_integral_area);
-for i = 1:length(img_paths)
-    output_csv{i+1,1} = img_names{i};
-end
-
-T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
-writetable(T,fullfile(char(img_dir_path),'data.csv'))
-
-if isfile(fullfile(data_path,[final_save_name '.csv']))
-    writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
-else
-    mkdir(data_path)
-    writetable(T,fullfile(data_path,[final_save_name '.csv']))
-end
-
-if data_analysis_and_export_bool
-    data_analysis_and_export_function(img_dir_path,experimental_name_has_conditions_in_it)
-end
+% 
+% output_csv = cell(1 + length(img_paths),11);
+% 
+% output_header = {'Image names',...
+%     'Worm 1 (blue) integrated Intensity','Worm 2 (teal) integrated Intensity',...
+%     'Worm 3 (green) integrated Intensity',...
+%     'Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',...
+%     'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area',...
+%     'Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area',...
+%     'Worm 5 (orange) integrated Area'};
+% 
+% output_csv(1,:) = output_header;
+% output_csv(2:end,2:6) = num2cell(image_integral_intensities);
+% output_csv(2:end,7:11) = num2cell(image_integral_area);
+% for i = 1:length(img_paths)
+%     output_csv{i+1,1} = img_names{i};
+% end
+% 
+% T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
+% writetable(T,fullfile(char(img_dir_path),'data.csv'))
+% 
+% if isfile(fullfile(data_path,[final_save_name '.csv']))
+%     writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
+% else
+%     mkdir(data_path)
+%     writetable(T,fullfile(data_path,[final_save_name '.csv']))
+% end
+% 
+% if data_analysis_and_export_bool
+%     data_analysis_and_export_function(img_dir_path,experimental_name_has_conditions_in_it)
+% end
 
 disp(' ')
 disp('End of scrip')
 
 
-function [data,this_img] = load_fluor_image(img_dir_path,img_paths,i)
+function [data,this_img,color_choice] = load_fluor_image(img_dir_path,img_paths,i)
 % read the image into ram
 
 [~,this_img_name,~] = fileparts(img_paths{i});
@@ -786,7 +806,7 @@ out = (this_scale/sum(this_line(:))) ^ 2;
 
 end
 
-function export_single_worm_images(worm_stack,img_name,output_path,img)
+function export_single_worm_images(worm_stack,img_name,output_path,img,color_choice)
 
 mkdir(fullfile(output_path,'aligned_worms'))
 
@@ -808,7 +828,40 @@ for i = 1:length(worm_stack)
     worm_name = [img_name '_W' num2str(i)];
     worm_output_path = fullfile(output_path,'aligned_worms',[worm_name '.png']);
     norm_data = double(worm_stack{i})/max_val;
+%     norm_data = gray_worm_image_to_color(norm_data,color_choice);
     imwrite(norm_data,worm_output_path)
 end
+
+end
+
+function out = gray_worm_image_to_color(img,color_choice)
+
+is_double = isa(img,'double');
+is_uint8 = isa(img,'uint8');
+is_uint16 = isa(img,'uint16');
+
+if is_double
+    out = zeros([size(img),3],'double');
+end
+if is_uint8
+    out = zeros([size(img),3],'uint8');
+end
+if is_uint16
+    out = zeros([size(img),3],'uint16');
+end
+
+out(:,:,color_choice) = img;
+
+end
+
+function out = outline_colored_worm(img,color_choice)
+
+gray_img = img(:,:,color_choice);
+blob = bwmorph(gray_img>0,'thicken',2);
+
+outline = blob-(gray_img>0);
+rgb_outline = cat(3,outline,outline,outline)*255;
+
+out = img+rgb_outline;
 
 end
