@@ -53,11 +53,11 @@ img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tif
 
 [~,final_save_name,~] = fileparts(img_dir_path);
 
-output_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'exported_images');
+output_path = fullfile(erase(erase(curr_path,'testing'),'scripts'),'exported_images');
 mkdir(output_path);
 
 if isempty(output_name)
-    output_name = final_save_name;
+    output_name = [final_save_name ' -- aligned_worms'];
 end
 
 [~,message,~] = fileattrib(fullfile(img_dir_path,'*'));
