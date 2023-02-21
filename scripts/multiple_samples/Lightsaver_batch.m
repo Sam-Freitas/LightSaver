@@ -152,7 +152,7 @@ for i = 1:length(img_paths)
     end
     
     if max(this_label(:))<number_worms_to_detect
-        disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_names{i}])
+        disp(['Warning: less than ' num2str(number_worms_to_detect) ' worms detected - ' img_names{i}])
         disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
         
         this_mask = bwareafilt(this_label>0,number_worms_to_detect);
