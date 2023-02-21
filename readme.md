@@ -51,7 +51,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
       - some directory with the *.tiff* files (example: exported images from LEICA)
       
 
-# Usage: Data processing/exporting an entire experiment (recommended)
+# Usage: Automatically data processing/exporting/analyzing an entire experiment (recommended)
 > Batching an entire experiment at once, and exporting for easy plotting in Prism(TM) 
 
 1.  Set up data as shown in the above example
