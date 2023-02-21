@@ -90,7 +90,7 @@ The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineerin
 
 6.  There should now be a data.csv file in the directory that contains the *.tifs 
 
-# Usage: data analysis
+# Usage: data analysis (automatically analyzed when using recommened settings)
 
 1.  open and run "Data_analysis_and_export.m"
 
