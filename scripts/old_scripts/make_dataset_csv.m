@@ -7,8 +7,8 @@ final_save_name = 'dataset';
 path_to_imgs = fullfile(pwd,'mask_data','images');
 path_to_masks = fullfile(pwd,'mask_data','masks');
 
-masks_dir = dir(fullfile(path_to_masks,'*.jpg'));
-imgs_dir = dir(fullfile(path_to_imgs,'*.jpg'));
+masks_dir = dir(fullfile(path_to_masks,'*.png'));
+imgs_dir = dir(fullfile(path_to_imgs,'*.png'));
 
 masks_names = {masks_dir.name};
 img_names = {imgs_dir.name};
