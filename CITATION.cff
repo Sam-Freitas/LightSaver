@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "LightSaver Citation"
+authors:
+  - family-names: Freitas
+    given-names: Samuel
+    orcid: https://orcid.org/0000-0002-9129-4715
+title: "Fluorescent analysis of individualized C. elegans"
+version: 0.1
+date-released: 2023-02-06
