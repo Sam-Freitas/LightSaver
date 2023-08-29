@@ -1,9 +1,25 @@
 cff-version: 1.2.0
-message: "LightSaver Citation"
+title: LightSaver
+message: Please Cite LightSaver if Used
+type: software
 authors:
-  - family-names: Freitas
-    given-names: Samuel
-    orcid: https://orcid.org/0000-0002-9129-4715
-title: "Fluorescent analysis of individualized C. elegans"
-version: 0.1
-date-released: 2023-02-06
+  - given-names: Samuel
+    family-names: Freitas
+    email: samfreitas@arizona.edu
+    name-particle: Samuel
+    affiliation: University of Arizona
+    orcid: 'https://orcid.org/0000-0002-9129-4715'
+identifiers:
+  - type: doi
+    value: 10.1101/2021.06.01.446651
+    description: First published usage
+repository-code: 'https://github.com/Sam-Freitas/LightSaver'
+abstract: Fluorescent analysis of individualized C. elegans
+keywords:
+  - fluorescent-imaging
+  - C. elegans
+  - bioengineering
+license: GPL-3.0
+commit: Beta release
+version: '0.1'
+date-released: '2023-02-06'
