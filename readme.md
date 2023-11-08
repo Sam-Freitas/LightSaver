@@ -1,103 +1,54 @@
-# LightSaver
-
-
+#<p align="center">LightSaver</p>
 
 ![LightSaver](img1.jpg)
 
+**LightSaver** is a powerful data analysis package designed for fluorescent C. elegans imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez at the University of Arizona, Sutphin Lab in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
 
-```
-The LightSaver system is data analysis package for fluorecent C. elegans imaging 
+*Please note: We're actively working on both a Python version and a standalone application for enhanced accessibility.*
 
-Developed by Samuel Freitas with help from Raul Castro-Portugez
+## Required MATLAB Packages
+- 'Image Processing Toolbox'
+- 'Computer Vision Toolbox'
 
-The University of Arizona, Sutphin Lab Microbiology (MCB), Biomedical Engineering (BME)
+## File Parameters Setup
 
-Please note: we are working on both a python and application version for ease of proliferation   
-```
+![File Setup](img2.jpg)
 
-# Required matlab packages
+> This directory structure is essential for the proper functioning of the `multiple_samples -> Lightsaver_batch.m` script. In this example, the overarching experiment is the "Example Experiment" folder under the data directory.
 
-  ```
-  'Image Processing Toolbox' 
-  
-  'Computer Vision Toolbox'
-  ```
+**Important Notes:**
+- The script scans files recursively, sorting them by timepoint (following the nomenclature DN, Day N).
+- Even if there's only a single timepoint, this directory format must still be followed, but with a single sub-experiment folder.
 
+**Image Naming Guidelines:**
+- Each image should have a descriptive name (e.g., `skn-1-HT115-EV_D1_1.tiff`, `skn-1-HT115-EV_D1_2.tiff`). The naming convention typically follows `exp-name-and-sumbnames_dayN_replicateN.tiff`.
 
-# File parameters setup
+## Usage: Automatic Data Processing/Exporting/Analyzing of an Entire Experiment (Recommended)
 
-![Filesetup](img2.jpg)
+1. Set up data as shown above.
+2. Open `Lightsaver_batch.m` under the `multiple_samples` directory.
+3. Run the script (press F5 or the run button in MATLAB).
+4. The parameters prompt will ask for experiment-specific details (press OK when completed).
+5. Choose the overarching experiment folder in the selection prompt.
+6. The script will display progress bars and export the data.
+7. Check the "Exported images" folder (usually in documents/github/lightsaver) for the output. Rerun with the "Use large blob fix" flag if needed.
 
->this is how the directories (folders) should be setup to use the multiple_samples -> Lightsaver_batch.m (recommended) script properly. The overarching experiment in this example would be the "Example Experiment" folder under the data folder
+## Usage: Data Processing Single Sub-Experiments Individually (Not Recommended Unless Data Is Extremely Noisy and "Bad_images_fix.m" Must Be Used)
 
-*Note: this script recursively scans all possible files for every .tiff file and will sort them by timepoint (specifically the nomenclature DN (Day N)*
+1. Open `Ligthsaver_script.m`.
+2. Set parameters.
+3. Run `lightsaver_script.m`.
+4. Choose the directory containing the *.tiff* images.
+5. Check output data if necessary.
 
-*Note: if there is only a single timepoint this directory format must still be followed, just with a single sub experiment folder*
+**If there are problems:**
+- Large blobs? Use the `large_blob_fix` option in `lightsaver_script.m`.
+- Major issues? Employ `bad_images_fix.m`.
 
-**Important: each image should have a descriptive name of what it is (example: skn-1-HT115-EV_D1_1.tiff,skn-1-HT115-EV_D1_2.tiff). The naming scheme is usually something like exp-name-and-sumbnames_dayN_replicateN.tiff**
+Now, you should find a `data.csv` file in the directory containing the *.tifs.
 
-**Important: The image names are EXTREMELY important and SHOULD NOT CONTAIN ANY EXTRA INFORMATION besides what is said above (exp-name-and-sumbnames_dayN_replicateN.tiff). If something is repeated across every image it will be removed from the final image names, if RNAi (NGM, NCR, or anything) is repeated across all the image names it WILL be removed, please name experiments accordingly**
+## Usage: Data Analysis (Automatically Analyzed When Using Recommended Settings)
 
-**Important: the exporting function only currently accepts different days as timepoints therefor the last piece in the descriptive name**
-
-  - Overarching experiment (example: Oxidative stress )
-  
-    - Sub experiment 1 (example: timepoint 1 or 1/1/1995)
-    
-      - some directory with the *.tiff* files (example: exported images from LEICA 
-      
-    - ...
-   
-    - Sub Experiment N (example: timepoint n or 1/N/1995) 
-      
-      - some directory with the *.tiff* files (example: exported images from LEICA)
-      
-
-# Usage: Automatic data processing/exporting/analyzing of an entire experiment (recommended)
-> Batching an entire experiment at once, and exporting for easy plotting in Prism(TM) 
-
-1.  Set up data as shown in the above example
-
-2.  Open "Lightsaver_batch.m" under the "multiple_samples" directory
-
-3.  Run "Lightsaver_batch.m" by either pressing F5 or the run button at the top of MATLAB
-
-4.  The parameters prompt will open and ask for experiment specific parameters (press ok when completed)
-
-5.  The experiment selection prompt will open, please select the Overarching experiment folder (as specified above)
-
-6.  The script will then display progress bars and where all the data gets exported to
-
-7.  Check the "Exported images" folder (wherever the LightSaver directory got saved to, most likely in documents/github/lightsaver) to double check output, and rerun with the "Use large blob fix" flag if necessary
-
-# Usage: Data processing single sub-experiments individually (not recommended unless data is extremely noisy and "Bad_images_fix.m" must be used)
-
-1.  open "Ligthsaver_script.m"
-
-2.  set parameters
-
-3.  Run "lightsaver_script.m"
-
-4.  Choose the directory containing the *.tiff* images
-
-5.  Check output data if necessary
-
-  - If there are problems
-
-  - Large blobs?
-    - use the large_blob_fix option in lightsaver_script.m
-
-  - Just completely messed up?
-    - bad_images_fix.m
-
-6.  There should now be a data.csv file in the directory that contains the *.tifs 
-
-# Usage: data analysis (automatically analyzed when using recommened settings)
-
-1.  open and run "Data_analysis_and_export.m"
-
-2.  Choose the overarching experiment folder from the dropdown menu
-
-3.  Check to make sure the "Analyzed_data.csv" is correct and the output_figures directory is present
-
-
+1. Open and run `Data_analysis_and_export.m`.
+2. Choose the overarching experiment folder from the dropdown menu.
+3. Verify that "Analyzed_data.csv" is correct and the `output_figures` directory is present.
