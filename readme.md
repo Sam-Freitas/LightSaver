@@ -1,4 +1,4 @@
-#<p align="center">LightSaver</p>
+#LightSaver
 
 ![LightSaver](img1.jpg)
 
