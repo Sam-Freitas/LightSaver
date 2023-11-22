@@ -90,7 +90,6 @@ img_paths = img_paths(sort_idx);
 
 image_integral_intensities = zeros(length(img_paths),number_worms_to_detect);
 image_integral_area = zeros(length(img_paths),number_worms_to_detect);
-roughness_calc = zeros(length(img_paths),number_worms_to_detect);
 
 se = strel('disk',5);
 progress_bar = 0;
@@ -118,28 +117,25 @@ for i = 1:length(img_paths)
         this_mask = bwareaopen(this_mask,3000);
         % label the mask
         this_label = bwlabel(this_mask);
-        % check roughness of the labeled masks 
-        label_roughness = measure_label_roughness(this_label);
-        if all(label_roughness<1.75)
-            % if there are 5 blobs in the mask
-            if max(this_label(:)) == number_worms_to_detect
-                % step one iteration further
-                this_thresh2 = mean2(data_norm)+(std2(data_norm)*(1/5)*(j));
-                this_mask2 = imgaussfilt(data_norm,2)>this_thresh2;
-                this_mask2 = bwareaopen(this_mask2,3000);
-                this_label2 = bwlabel(this_mask2);
+        
+        % if there are 5 blobs in the mask
+        if max(this_label(:)) == number_worms_to_detect
+            % step one iteration further
+            this_thresh2 = mean2(data_norm)+(std2(data_norm)*(1/5)*(j));
+            this_mask2 = imgaussfilt(data_norm,2)>this_thresh2;
+            this_mask2 = bwareaopen(this_mask2,3000);
+            this_label2 = bwlabel(this_mask2);
+            
+            % if there are still 5 blobs then keep this mask
+            if max(this_label2(:)) == number_worms_to_detect
+                this_mask = this_mask2;
+                this_label = this_label2;
                 
-                % if there are still 5 blobs then keep this mask
-                if max(this_label2(:)) == number_worms_to_detect
-                    this_mask = this_mask2;
-                    this_label = this_label2;
-                    
-                    % break out of the loop
-                    break
-                end
-                % break out of the loop if there are 5 blobs
+                % break out of the loop
                 break
             end
+            % break out of the loop if there are 5 blobs
+            break
         end
         
     end
@@ -147,26 +143,12 @@ for i = 1:length(img_paths)
     % if there are many blobs still detected only take the 5 largest
     if max(this_label(:))>number_worms_to_detect
         disp(['Warning: more than ' num2str(number_worms_to_detect) ' worms detected - ' img_names{i}])
-        disp(['Using only the ' num2str(number_worms_to_detect) ' smoothest blobs'])
-
-        label_roughness = measure_label_roughness(this_label);
-        label_circularity = measure_label_circularity(this_label);
+        disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
         
-        temp = zeros(size(label_circularity)); % this will essentially get rid of the circular objects
-        temp(label_circularity>0.5) = 100; % by weighting the roughness and circularity of an object
-        temp(label_circularity<=0.5) = 1;
-        label_roughness = label_roughness.*temp;
-
-        [~,idx] = mink(label_roughness,number_worms_to_detect);
-        idx = sort(idx);
-
-        temp_label = zeros(size(this_label));
-        for j = 1:length(idx)
-            temp_label = temp_label + (this_label==idx(j) );
-        end
-        this_label = bwlabel(temp_label);
-                
-        this_mask = temp_label>0;
+        E = entropyfilt(data_norm);
+        
+        this_mask = bwareafilt(this_label>0,number_worms_to_detect);
+        
     end
     
     if max(this_label(:))<number_worms_to_detect
@@ -174,13 +156,19 @@ for i = 1:length(img_paths)
         disp(['Using only the ' num2str(number_worms_to_detect) ' largest blobs'])
         
         this_mask = bwareafilt(this_label>0,number_worms_to_detect);
+        
     end
-
+    
+    % if this is chosen then a semi-smart filter will try to fix the large
+    % blobs that contain multiple worms
     large_blob_is_fixed = 0;
     if use_large_blob_fix
+        
         [this_label,this_mask,large_blob_is_fixed] = large_blob_fix(this_label,...
             this_mask,data_norm,img_names,number_worms_to_detect,i);
+        
     end
+    
     
     % thicken all the masks
     new_mask = bwmorph(this_mask,'Thicken',1);
@@ -263,8 +251,6 @@ output_csv(2:end,7:11) = num2cell(image_integral_area);
 for i = 1:length(img_paths)
     output_csv{i+1,1} = img_names{i};
 end
-
-mkdir(data_path)
 
 T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
 writetable(T,fullfile(char(img_dir_path),'data.csv'))
@@ -445,6 +431,8 @@ if ~isempty(contained_in_all_names)
             end
             
         end
+        
+        
         
         for j = 1:length(img_names)
             
@@ -769,24 +757,4 @@ this_measurement = ocr_text(end-2:end);
 
 out = (this_scale/sum(this_line(:))) ^ 2;
 
-end
-
-function out = measure_label_roughness(this_labeled_mask)
-
-out = zeros(1,max(this_labeled_mask(:)));
-
-for j = 1:max(this_labeled_mask(:))
-    this_convex_img = regionprops(this_labeled_mask==j,'ConvexImage').ConvexImage;
-    out(j) = ...
-        sum(bwperim(this_labeled_mask==j,8),'all') / sum(bwperim(padarray(this_convex_img,[5,5],0,'both'),8),'all');
-end
-
-end
-
-function out = measure_label_circularity(this_labeled_mask)
-
-out = zeros(1,max(this_labeled_mask(:)));
-
-r = {regionprops(this_labeled_mask>0,'Circularity').Circularity};
-out = cell2mat(r);
 end
