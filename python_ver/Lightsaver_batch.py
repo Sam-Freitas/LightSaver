@@ -1,8 +1,8 @@
 import tkinter as tk
-from tkinter import simpledialog, filedialog
+from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
-import os
+import os, time, cv2
 
 # Suppress warnings
 import warnings
@@ -99,6 +99,35 @@ def get_user_inputs():
 
     return get_input()
 
+def create_progress_window():
+    # Create Tkinter window
+    root_progressbar = tk.Tk()
+    root_progressbar.attributes('-topmost', True)
+    root_progressbar.title("Progress Bar")
+
+    # Create progress bar
+    progress_bar = ttk.Progressbar(root_progressbar, orient='horizontal', length=1000, mode='determinate')
+    progress_bar.pack(pady=10)
+
+    # Create label for displaying text over the progress bar
+    label = tk.Label(root_progressbar, text="")
+    label.pack()
+
+    return root_progressbar, progress_bar, label
+
+def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
+    progress_bar['value'] = (current_iteration / total) * 100
+    # print("Progress: {:.1f}%".format(current_iteration / total * 100), end='\r')
+
+    # Update label text
+    text = text[:50]  # Limit text length to 50 characters
+    text = text.ljust(50)  # Pad text with spaces to ensure consistent display width
+    label.config(text=text)
+
+    progress_bar.update()  # Update the progress bar
+
+    time.sleep(0.1)  # Introduce a delay of 0.1 seconds
+
 # Get user inputs
 inputs = get_user_inputs()
 
@@ -132,12 +161,29 @@ for path, subdirs, files in os.walk(selected_directory):
         if fnmatch(name, pattern):
             img_paths.append(os.path.join(path, name))
 img_paths = natsorted(img_paths)
-
 print('There are',img_paths.__len__(),'files with the *.tif ests.\n')
 
+# check to make sure that there are acutally images in the directory
 if img_paths.__len__() == 0:
     exit("No TIF images found")
 
+# this is for the export names, just cleans them up and removes ANYTHING that is the same across all names
 img_names = clean_img_names(img_paths)
+
+# Set total iterations and set up the progress bar
+root_progressbar, progress_bar, label = create_progress_window()
+# update_progress_bar(progress_bar, label, 0, len(img_paths), text= "starting")
+
+for i in range(len(img_paths)):
+    print(i,img_names[i])
+    update_progress_bar(progress_bar, label, i, len(img_paths), text= "Processing --- " + img_names[i] + '\t' + str(i+1) + '/' + str(len(img_paths)))
+    # Update progress bar
+    time.sleep(1)
+    
+# Print completion message after the loop
+print("\nWork completed.")
+
+# Close Tkinter window after the loop completes
+root_progressbar.destroy()
 
 print('eof')
