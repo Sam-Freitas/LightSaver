@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
-import os, time, cv2
+import os, time, cv2, re
 
 # Suppress warnings
 import warnings
@@ -11,9 +11,14 @@ warnings.filterwarnings("ignore", category=UserWarning)
 def clean_img_names(img_paths):
 
     cleaned_file_names = [os.path.basename(path) for path in img_paths]
+
+    for i, this_name in enumerate(cleaned_file_names):
+        cleaned_file_names[i] = re.sub(r'00[0-9]', '', this_name)
+
+    # remove common prefix
     common_prefix = os.path.commonprefix(cleaned_file_names)
     cleaned_file_names = [file_name[len(common_prefix):] for file_name in cleaned_file_names]
-
+    # remove common suffix
     common_suffix = os.path.commonprefix([w[::-1] for w in cleaned_file_names])[::-1]
     cleaned_file_names = [file_name[:-len(common_suffix)] for file_name in cleaned_file_names]
 
@@ -110,7 +115,7 @@ def create_progress_window():
     progress_bar.pack(pady=10)
 
     # Create label for displaying text over the progress bar
-    label = tk.Label(root_progressbar, text="")
+    label = tk.Label(root_progressbar, text="", anchor="w")
     label.pack()
 
     return root_progressbar, progress_bar, label
@@ -120,13 +125,11 @@ def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
     # print("Progress: {:.1f}%".format(current_iteration / total * 100), end='\r')
 
     # Update label text
-    text = text[:50]  # Limit text length to 50 characters
+    text = text[:100]  # Limit text length to 50 characters
     text = text.ljust(50)  # Pad text with spaces to ensure consistent display width
     label.config(text=text)
 
     progress_bar.update()  # Update the progress bar
-
-    time.sleep(0.1)  # Introduce a delay of 0.1 seconds
 
 # Get user inputs
 inputs = get_user_inputs()
@@ -176,9 +179,10 @@ root_progressbar, progress_bar, label = create_progress_window()
 
 for i in range(len(img_paths)):
     print(i,img_names[i])
-    update_progress_bar(progress_bar, label, i, len(img_paths), text= "Processing --- " + img_names[i] + '\t' + str(i+1) + '/' + str(len(img_paths)))
     # Update progress bar
-    time.sleep(1)
+    update_progress_bar(progress_bar, label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i+1) + '/' + str(len(img_paths)))
+
+    time.sleep(0.1)
     
 # Print completion message after the loop
 print("\nWork completed.")
