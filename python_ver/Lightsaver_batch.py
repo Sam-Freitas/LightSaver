@@ -1,12 +1,56 @@
 import tkinter as tk
+import numpy as np
 from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
 import os, time, cv2, re
+import matplotlib.pyplot as plt
+
+import matplotlib # for some reason using the 'agg' 
+matplotlib.use('TkAgg')#)'qtagg')
 
 # Suppress warnings
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+
+def load_fluor_image(img_paths,i):
+
+    this_img_name = os.path.split(img_paths[i])[-1]
+
+    # try to read in the image and report if there is an error 
+    try:
+        this_img = cv2.imread(img_paths[i])
+    except:
+        print(['ERROR: reading image - ', this_img_name])
+        print(['Image will be treated as corrupted and skipped'])
+        try:
+            this_img = np.zeros_like(this_img)
+        except:
+            this_img = np.zeros(1024,1024)
+
+    # if for some reason that the LUA was also saved at the 4th zpos 
+    if this_img.shape[-1] > 3:
+        this_img = this_img[:,:,0:3]
+    
+    # check for rgb
+    if len(this_img.shape) > 2:
+
+        R,G,B = this_img[:,:,0],this_img[:,:,1],this_img[:,:,2]
+
+        color_choice = np.argmax([np.sum(R),np.sum(G),np.sum(B)])
+
+        if color_choice == 0: # red fluorescence
+            data = R - G - B
+        elif color_choice == 1: # green fluorescence
+            data = G - B - R
+        elif color_choice == 2: # blue fluorescence 
+            data = B - R - G
+        else: # otherwise 
+            data = np.mean(this_img,axis=-1)
+
+    plt.imshow(data)
+
+    return data,this_img
 
 def clean_img_names(img_paths):
 
@@ -175,12 +219,13 @@ img_names = clean_img_names(img_paths)
 
 # Set total iterations and set up the progress bar
 root_progressbar, progress_bar, label = create_progress_window()
-# update_progress_bar(progress_bar, label, 0, len(img_paths), text= "starting")
 
 for i in range(len(img_paths)):
     print(i,img_names[i])
     # Update progress bar
     update_progress_bar(progress_bar, label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i+1) + '/' + str(len(img_paths)))
+
+    load_fluor_image(img_paths,i)
 
     time.sleep(0.1)
     
