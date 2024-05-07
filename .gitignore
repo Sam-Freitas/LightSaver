@@ -1,7 +1,11 @@
 data/*
+build/*
+dist/*
+exported_images/
 *.jpg
 *.png
 !data/placeholder.md
 .DS_Store
 App/
 **/*.asv
+Lightsaver_batch.spec
