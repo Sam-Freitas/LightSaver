@@ -246,6 +246,15 @@ def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
 
     progress_bar.update()  # Update the progress bar
 
+def display_images(images, blocking = False, fig = None):
+    if fig == None:
+        fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    for i, ax in enumerate(axes.flat):
+        ax.imshow(images[i], cmap='gray')  # Assuming images are grayscale
+        ax.axis('off')
+    plt.tight_layout()
+    plt.show(block = blocking)
+
 if __name__ ==  "__main__":
     # Get user inputs
     inputs = get_user_inputs()
@@ -345,6 +354,8 @@ if __name__ ==  "__main__":
             print('Using only the ',np.max(this_label),' largest blobs')
 
             this_mask, returned_areas = bwareafilt(this_mask,n = number_worms_to_detect)
+
+        display_images(np.asarray([data,this_mask,this_label,data*this_mask]),blocking = True)
 
         time.sleep(0.1)
         
