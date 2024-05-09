@@ -5,8 +5,8 @@ from fnmatch import fnmatch
 from natsort import natsorted
 import os, time, cv2, re, pathlib
 import matplotlib.pyplot as plt
-from scipy.ndimage import gaussian_filter
-from skimage.morphology import remove_small_objects
+from scipy.ndimage import gaussian_filter, binary_fill_holes
+from skimage.morphology import remove_small_objects, binary_closing, disk
 from skimage.measure import label
 
 import matplotlib # for some reason using the 'agg' 
@@ -246,14 +246,20 @@ def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
 
     progress_bar.update()  # Update the progress bar
 
-def display_images(images, blocking = False, fig = None):
-    if fig == None:
+def display_images(images, blocking = False, fig = None, axes = None, title = None):
+    if fig == None and axes == None:
         fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    if title is not None:
+        plt.suptitle(title)
     for i, ax in enumerate(axes.flat):
         ax.imshow(images[i], cmap='gray')  # Assuming images are grayscale
         ax.axis('off')
     plt.tight_layout()
-    plt.show(block = blocking)
+    if 'bool' in str(type(blocking)):
+        plt.show(block = blocking)
+    elif 'float' in str(type(blocking)) or 'int' in str(type(blocking)):
+        plt.draw()
+        plt.pause(blocking)
 
 if __name__ ==  "__main__":
     # Get user inputs
@@ -304,6 +310,10 @@ if __name__ ==  "__main__":
     # Set total iterations and set up the progress bar
     root_progressbar, progress_bar, progress_bar_label = create_progress_window()
 
+    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+
+    image_integral_intensities = np.zeros(shape = (len(img_paths),number_worms_to_detect))
+    image_integral_area = np.zeros(shape = (len(img_paths),number_worms_to_detect))
 
     # this is the main loop 
     for i in range(len(img_paths)):
@@ -324,7 +334,7 @@ if __name__ ==  "__main__":
             # remove any small blobs from the mask
             this_mask = matlab_bwareaopen(this_mask,min_size = 3000, connectivity = 4)
             # label the mask
-            this_label = label(this_mask)
+            this_label = label(this_mask,connectivity=2)
 
             # if there are N blobs in the image 
             if np.max(this_label) == number_worms_to_detect:
@@ -332,7 +342,7 @@ if __name__ ==  "__main__":
                 this_thresh2 = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j))
                 this_mask2 = matlab_gaussian_filter(data_norm,2)>this_thresh2
                 this_mask2 = matlab_bwareaopen(this_mask2,min_size = 3000, connectivity = 4)
-                this_label2 = label(this_mask2)
+                this_label2 = label(this_mask2,connectivity=2)
 
                 # if there are still N blobs then keep this mask
                 if np.max(this_label2) == number_worms_to_detect:
@@ -355,7 +365,26 @@ if __name__ ==  "__main__":
 
             this_mask, returned_areas = bwareafilt(this_mask,n = number_worms_to_detect)
 
-        display_images(np.asarray([data,this_mask,this_label,data*this_mask]),blocking = True)
+        # thicken the masks (different than matlabs interp)
+        new_mask = (matlab_gaussian_filter(this_mask,0.25))>0
+        # close small edges and zones
+        new_mask = binary_closing(new_mask,footprint = disk(5))
+        # fill the holes 
+        new_mask = binary_fill_holes(new_mask)
+        # re-label the masks
+        labeled_masks = np.rot90(label(np.rot90(new_mask,-1), connectivity=2),1)
+
+        # mask the inital data without the normalization step
+        # attempts to get rid of the background signals
+        masked_data = new_mask*(data.astype(np.float64))
+
+        for j in range(int(np.max(labeled_masks))):
+            this_labeled_mask = masked_data*(labeled_masks == (j+1))
+            image_integral_intensities[i,j] = np.sum(this_labeled_mask)
+            image_integral_area[i,j] = np.sum(this_labeled_mask>0)
+
+        fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+        display_images(np.asarray([data,new_mask,labeled_masks,masked_data]),blocking = True, fig=fig,axes=axes, title = img_names[i])
 
         time.sleep(0.1)
         
