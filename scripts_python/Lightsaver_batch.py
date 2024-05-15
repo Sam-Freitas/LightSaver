@@ -1,5 +1,5 @@
 import tkinter as tk
-import numpy as np
+import numpy as np, pandas as pd
 from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
@@ -11,6 +11,74 @@ from skimage.measure import label
 
 import matplotlib # for some reason using the 'agg' 
 matplotlib.use('TkAgg')#)'qtagg')
+
+def label_to_rgb(label_img):
+
+    label_to_color = {
+        0: [0,0,0],
+        1: [0,128,255],
+        2: [0,255,255],
+        3: [128,255,128],
+        4: [255,255,0],
+        5: [255,128,0]
+    }
+
+    out = np.zeros(shape = (label_img.shape[0],label_img.shape[1],3)).astype(np.uint8)
+
+    # https://stackoverflow.com/questions/68192717/how-to-efficiently-convert-image-labels-to-rgb-values
+    for gray, rgb in label_to_color.items():
+        out[label_img == gray, :] = list(reversed(rgb)) # needs to be reversed for cv2 output idk
+
+    return out
+
+def normalize_image(image, return_uint8=True):
+    # Convert int32 to float32
+    image_float = image.astype(np.float32)
+    # Normalize the image
+    image_normalized = (image_float - np.min(image_float)) / (1+(np.max(image_float) - np.min(image_float)))
+    if return_uint8:
+        # Scale to 0-255
+        image_scaled = (image_normalized * 255).astype(np.uint8)
+        return image_scaled
+    else:
+        return image_normalized
+
+def resize_and_construct_grid(images, title=''):
+    # Ensure all images are color images
+    resized_images = []
+    for img in images:
+        if 'int' in str(img.dtype): # this should only be for label
+            img = normalize_image(img)
+        if img.dtype == bool:
+            img = (img * 255).astype(np.uint8)  # Convert boolean to uint8
+        if len(img.shape) == 2:  # If the image is grayscale
+            img = cv2.cvtColor(normalize_image(img), cv2.COLOR_GRAY2RGB)  # Convert to color image
+        elif len(img.shape) == 3 and img.shape[2] == 1:  # If the image has only one channel
+            img = cv2.cvtColor(normalize_image(img), cv2.COLOR_GRAY2RGB)  # Convert to color image
+        resized_images.append(img)
+    
+    # Determine the maximum dimensions among all images
+    max_height = max(img.shape[0] for img in resized_images)
+    max_width = max(img.shape[1] for img in resized_images)
+    
+    # Resize images to the maximum dimensions
+    resized_images = [cv2.resize(img, (max_width, max_height)) for img in resized_images]
+    
+    # Construct the grid
+    grid = np.zeros((max_height, 3*max_width, 3), dtype=np.uint8)
+    for i, img in enumerate(resized_images):
+        col_start = i * max_width
+        col_end = (i + 1) * max_width
+        grid[:, col_start:col_end] = img
+    
+    # Superimpose title on top middle
+    font_scale = 2  # Larger font scale
+    title_size = cv2.getTextSize(title, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 3)[0]
+    text_x = (grid.shape[1] - title_size[0]) // 2
+    text_y = title_size[1] + 20
+    cv2.putText(grid, title, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), 3)
+    
+    return grid
 
 # https://github.com/AndersDHenriksen/SanityChecker/blob/master/AllChecks.py
 def bwareafilt(mask, n=1, area_range=(0, np.inf)):
@@ -91,12 +159,12 @@ def load_fluor_image(img_paths,i, fill_value = 0):
     if np.sum(data) < 1000:
         data = this_img[:,:,color_choice]
         # replace the scale bar with the median of the data (should be the background)
-        if fill_value == 0:
-            data[-100:-1,0:256] = 0 #np.median(data)
-        elif 'str' in type(fill_value):
-            data[-100:-1,0:256] = np.median(data)
-        else:
-            data[-100:-1,0:256] = fill_value #np.median(data)
+    if fill_value == 0:
+        data[980:data.shape[0],0:215] = 0 #np.median(data)
+    elif 'str' in str(type(fill_value)):
+        data[980:data.shape[0],0:215] = np.median(data)
+    else:
+        data[980:data.shape[0],0:215] = fill_value #np.median(data)
 
     return data,this_img
 
@@ -113,6 +181,10 @@ def clean_img_names(img_paths):
     # remove common suffix
     common_suffix = os.path.commonprefix([w[::-1] for w in cleaned_file_names])[::-1]
     cleaned_file_names = [file_name[:-len(common_suffix)] for file_name in cleaned_file_names]
+
+    for i,this_name in enumerate(cleaned_file_names):
+        if this_name[0] == '_':
+            cleaned_file_names[i] = this_name[1:]
 
     counter = 0
     for i,this_name in enumerate(cleaned_file_names):
@@ -249,6 +321,8 @@ def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
 def display_images(images, blocking = False, fig = None, axes = None, title = None):
     if fig == None and axes == None:
         fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    else:
+        fig.clf()
     if title is not None:
         plt.suptitle(title)
     for i, ax in enumerate(axes.flat):
@@ -260,6 +334,68 @@ def display_images(images, blocking = False, fig = None, axes = None, title = No
     elif 'float' in str(type(blocking)) or 'int' in str(type(blocking)):
         plt.draw()
         plt.pause(blocking)
+
+def display_images2(images, blocking=False, fig=None, axes=None, title=None):
+    if fig is None and axes is None:
+        fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    else:
+        for ax in axes.flat:
+            ax.clear()  # Clear the axes
+    if title is not None:
+        fig.suptitle(title)  # Set title for the figure
+    for i, ax in enumerate(axes.flat):
+        ax.imshow(images[i], cmap='gray')  # Assuming images are grayscale
+        ax.axis('off')
+    fig.tight_layout()  # Adjust layout
+    if blocking is not None:
+        if isinstance(blocking, bool):
+            plt.show(block=blocking)
+        elif isinstance(blocking, (float, int)):
+            plt.draw()
+            plt.pause(blocking)
+
+def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000):
+    
+    # this algorithm is supposed to be an exact match to the matlab (base) version
+    for j in range(1,7):
+        check_flag = True
+        # create first threshold
+        this_thresh = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j-1))
+        # create a mask
+        this_mask = matlab_gaussian_filter(data_norm,2) > this_thresh
+        # remove any small blobs from the mask
+        this_mask = matlab_bwareaopen(this_mask,min_size = min_worm_size, connectivity = 4)
+        # label the mask
+        this_label = label(this_mask,connectivity=2)
+
+        # if there are N blobs in the image 
+        if np.max(this_label) == number_worms_to_detect:
+
+            label_sizes = []
+            for k in range( int(np.max(this_label))):
+                label_sizes.append(np.sum(this_label==(k+1)))
+
+            if np.sum((np.asarray(label_sizes)/(this_img.shape[0]*this_img.shape[1]))>0.18):
+                print('LARGE MASK DETECTED ATTEMPT FIX')
+                j = j+1
+                check_flag = False
+            
+            if check_flag:
+                # step one iterathion further
+                this_thresh2 = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j))
+                this_mask2 = matlab_gaussian_filter(data_norm,2)>this_thresh2
+                this_mask2 = matlab_bwareaopen(this_mask2,min_size = 3000, connectivity = 4)
+                this_label2 = label(this_mask2,connectivity=2)
+
+                # if there are still N blobs then keep this mask
+                if np.max(this_label2) == number_worms_to_detect:
+                    this_mask = this_mask2
+                    this_label = this_label2
+                    break
+                # break out of the loop if N blobs are detected
+                break
+    
+    return this_mask, this_label
 
 if __name__ ==  "__main__":
     # Get user inputs
@@ -280,6 +416,9 @@ if __name__ ==  "__main__":
         output_img_format = '.png'
     else:
         output_img_format = '.jpg'
+
+    # set the minimum worm size, might be updated if no masks can be found
+    min_worm_size = 3000
 
     # Get current path
     curr_path = os.getcwd()
@@ -310,10 +449,19 @@ if __name__ ==  "__main__":
     # Set total iterations and set up the progress bar
     root_progressbar, progress_bar, progress_bar_label = create_progress_window()
 
-    fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+    if show_output_images:
+        fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 
     image_integral_intensities = np.zeros(shape = (len(img_paths),number_worms_to_detect))
     image_integral_area = np.zeros(shape = (len(img_paths),number_worms_to_detect))
+
+    if show_output_images:
+        blocking = 0.1
+    else:
+        if export_processed_images:
+            blocking = None
+        else:
+            blocking = False
 
     # this is the main loop 
     for i in range(len(img_paths)):
@@ -321,37 +469,19 @@ if __name__ ==  "__main__":
         # Update progress bar
         update_progress_bar(progress_bar, progress_bar_label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i+1) + '/' + str(len(img_paths)))
 
-        data, this_img = load_fluor_image(img_paths,i)
+        data, this_img = load_fluor_image(img_paths,i,fill_value='median')#fill_value='median)
 
         data_norm = data.astype(np.float64)/255
 
-        # this algorithm is supposed to be an exact match to the matlab (base) version
-        for j in range(1,7):
-            # create first threshold
-            this_thresh = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j-1))
-            # create a mask
-            this_mask = matlab_gaussian_filter(data_norm,2) > this_thresh
-            # remove any small blobs from the mask
-            this_mask = matlab_bwareaopen(this_mask,min_size = 3000, connectivity = 4)
-            # label the mask
-            this_label = label(this_mask,connectivity=2)
+        # run the segmentation 
+        this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = min_worm_size)
 
-            # if there are N blobs in the image 
-            if np.max(this_label) == number_worms_to_detect:
-                # step one iterathion further
-                this_thresh2 = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j))
-                this_mask2 = matlab_gaussian_filter(data_norm,2)>this_thresh2
-                this_mask2 = matlab_bwareaopen(this_mask2,min_size = 3000, connectivity = 4)
-                this_label2 = label(this_mask2,connectivity=2)
+        # if there are no blobs detetced. redo the last threshold and take the N largest
+        if np.max(this_label) == 0 or np.max(this_label)==1:
+            print('Warning: NO WORMS FOUND USING STANDARD METHODS ON - ', img_names[i])
+            print('Reducing minimum blob size from', min_worm_size, ' to ', str(1000))
+            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000)
 
-                # if there are still N blobs then keep this mask
-                if np.max(this_label2) == number_worms_to_detect:
-                    this_mask = this_mask2
-                    this_label = this_label2
-                    break
-                # break out of the loop if N blobs are detected
-                break
-        
         # if there are many blobks still detected only take the N largest
         if np.max(this_label) > number_worms_to_detect:
             print('Warning: MORE than ', (number_worms_to_detect),' worms detected - ', img_names[i])
@@ -383,13 +513,29 @@ if __name__ ==  "__main__":
             image_integral_intensities[i,j] = np.sum(this_labeled_mask)
             image_integral_area[i,j] = np.sum(this_labeled_mask>0)
 
-        fig, axes = plt.subplots(2, 2, figsize=(8, 8))
-        display_images(np.asarray([data,new_mask,labeled_masks,masked_data]),blocking = True, fig=fig,axes=axes, title = img_names[i])
+        # fig, axes = plt.subplots(2, 2, figsize=(8, 8))
+        if show_output_images:
+            display_images2(np.asarray([data,new_mask,labeled_masks,masked_data]),blocking = blocking, fig=fig,axes=axes, title = img_names[i])
+        if export_processed_images:
+            labeled_masks_rgb = label_to_rgb(labeled_masks)
+            out = resize_and_construct_grid([this_img,labeled_masks_rgb,masked_data], title=img_names[i])
+            cv2.imwrite(os.path.join(output_path,str(i+1) + '_' + img_names[i] + output_img_format),out)
 
-        time.sleep(0.1)
+        # time.sleep(0.1)
         
     # Print completion message after the loop
     print("\nWork completed.")
+
+    df = pd.DataFrame(columns = ['Image names','Worm 1 (blue) integrated Intensity',
+        'Worm 2 (teal) integrated Intensity','Worm 3 (green) integrated Intensity',
+        'Worm 4 (yellow/red) integrated Intensity','Worm 5 (orange) integrated Intensity',
+        'Worm 1 (blue) integrated Area','Worm 2 (teal) integrated Area',
+        'Worm 3 (green) integrated Area','Worm 4 (yellow/red) integrated Area',
+        'Worm 5 (orange) integrated Area'])
+    df['Image names'] = img_names
+    df.iloc[:,1:6] = image_integral_intensities
+    df.iloc[:,6:] = image_integral_area
+    df.to_csv(os.path.join(selected_directory,'data_python.csv'), index = False)
 
     # Close Tkinter window after the loop completes
     root_progressbar.destroy()
