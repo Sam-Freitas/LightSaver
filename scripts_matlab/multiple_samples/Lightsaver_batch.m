@@ -44,14 +44,15 @@ clearvars dims definput dlgtitle prompt answer
 
 % get current path
 curr_path = pwd;
+LightSaver_path = curr_path(1:(strfind(curr_path,'LightSaver')+length('LightSaver')));
 
-data_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'data');
+data_path = fullfile(LightSaver_path,'data');
 
 img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
 
 [~,final_save_name,~] = fileparts(img_dir_path);
 
-output_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'exported_images');
+output_path = fullfile(LightSaver_path,'exported_images');
 mkdir(output_path);
 
 if isempty(output_name)
