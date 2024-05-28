@@ -9,3 +9,4 @@ exported_images/
 App/
 **/*.asv
 Lightsaver_batch.spec
+scripts_python/test_diff_lightsvr.py
