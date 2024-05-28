@@ -3,14 +3,28 @@ import numpy as np, pandas as pd
 from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
-import os, time, cv2, re, pathlib
+import os, time, cv2, re, pathlib, glob, shutil, subprocess
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter, binary_fill_holes
 from skimage.morphology import remove_small_objects, binary_closing, disk
-from skimage.measure import label
+from skimage.measure import label, regionprops
 
 import matplotlib # for some reason using the 'agg' 
 matplotlib.use('TkAgg')#)'qtagg')
+
+def open_file_explorer(img_export_path):
+    if not os.path.exists(img_export_path):
+        raise FileNotFoundError(f"The path {img_export_path} does not exist.")
+    
+    if os.name == 'nt':  # For Windows
+        os.startfile(img_export_path)
+    elif os.name == 'posix':
+        if 'darwin' in os.uname().sysname.lower():  # For macOS
+            subprocess.run(['open', img_export_path])
+        else:  # For Linux
+            subprocess.run(['xdg-open', img_export_path])
+    else:
+        raise OSError("Unsupported operating system")
 
 def label_to_rgb(label_img):
 
@@ -80,6 +94,28 @@ def resize_and_construct_grid(images, title=''):
     
     return grid
 
+def imclearborder(binary_image):
+
+    # Label connected components
+    labeled_image, num_labels = label(binary_image, connectivity=2, return_num=True)
+    
+    # Get the shape of the image
+    rows, cols = binary_image.shape
+    
+    # Iterate through each label
+    for region in regionprops(labeled_image):
+        min_row, min_col, max_row, max_col = region.bbox
+        
+        # Check if the region touches the border
+        if min_row == 0 or min_col == 0 or max_row == rows or max_col == cols:
+            # Remove the region touching the border
+            for coordinates in region.coords:
+                labeled_image[coordinates[0], coordinates[1]] = 0
+    
+    # Convert the labeled image back to binary
+    cleared_image = (labeled_image > 0)
+    
+    return cleared_image
 # https://github.com/AndersDHenriksen/SanityChecker/blob/master/AllChecks.py
 def bwareafilt(mask, n=1, area_range=(0, np.inf)):
     """Extract objects from binary image by size """
@@ -187,10 +223,20 @@ def clean_img_names(img_paths):
             cleaned_file_names[i] = this_name[1:]
 
     counter = 0
+    non_counter = 0
     for i,this_name in enumerate(cleaned_file_names):
         if this_name in img_paths[i]:
             counter += 1
-    assert counter == len(img_paths)
+        else:
+            non_counter += 1
+    
+    if counter == len(img_paths):
+        print('Correct amount of img paths and img names detected')
+    else:
+        print('WARNING:: ')
+        print('WARNING:: ')
+        print('Naming scheme is not consistent and MOST LIKELY needs to be redone -- EXPORT MIGHT BE WRONG')
+        print('Please remove extraneous information from the image names')
 
     return cleaned_file_names
 
@@ -354,7 +400,7 @@ def display_images2(images, blocking=False, fig=None, axes=None, title=None):
             plt.draw()
             plt.pause(blocking)
 
-def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000):
+def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000, i = 0):
     
     # this algorithm is supposed to be an exact match to the matlab (base) version
     for j in range(1,7):
@@ -365,8 +411,10 @@ def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000):
         this_mask = matlab_gaussian_filter(data_norm,2) > this_thresh
         # remove any small blobs from the mask
         this_mask = matlab_bwareaopen(this_mask,min_size = min_worm_size, connectivity = 4)
+        # # remove any blobs that touch the sides
+        # this_mask = imclearborder(this_mask)
         # label the mask
-        this_label = label(this_mask,connectivity=2)
+        this_label, n_labels = label(this_mask,connectivity=2,return_num=True)
 
         # if there are N blobs in the image 
         if np.max(this_label) == number_worms_to_detect:
@@ -385,7 +433,7 @@ def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000):
                 this_thresh2 = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j))
                 this_mask2 = matlab_gaussian_filter(data_norm,2)>this_thresh2
                 this_mask2 = matlab_bwareaopen(this_mask2,min_size = 3000, connectivity = 4)
-                this_label2 = label(this_mask2,connectivity=2)
+                this_label2, n_labels2 = label(this_mask2,connectivity=2,return_num=True)
 
                 # if there are still N blobs then keep this mask
                 if np.max(this_label2) == number_worms_to_detect:
@@ -431,6 +479,8 @@ if __name__ ==  "__main__":
     final_save_name = os.path.split(selected_directory)[-1]
     output_path = os.path.join(output_path,final_save_name)
     os.makedirs(output_path,exist_ok=True)
+    shutil.rmtree(output_path) ############################################ THIS IS TESTING ONLY IT DELETES THE EXPORTED IMGAGES 
+    os.makedirs(output_path,exist_ok=True)
 
     # step through all the files in the selected data folder to get a list of the tif images paths
     pattern = "*.tif"
@@ -463,6 +513,8 @@ if __name__ ==  "__main__":
         else:
             blocking = False
 
+    open_file_explorer(output_path)
+
     # this is the main loop 
     for i in range(len(img_paths)):
         print(i,img_names[i])
@@ -474,7 +526,7 @@ if __name__ ==  "__main__":
         data_norm = data.astype(np.float64)/255
 
         # run the segmentation 
-        this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = min_worm_size)
+        this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = min_worm_size, i = i)
 
         # if there are no blobs detetced. redo the last threshold and take the N largest
         if np.max(this_label) == 0 or np.max(this_label)==1:
