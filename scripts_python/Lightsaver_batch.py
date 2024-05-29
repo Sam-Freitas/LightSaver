@@ -3,14 +3,16 @@ import numpy as np, pandas as pd
 from tkinter import simpledialog, filedialog, ttk
 from fnmatch import fnmatch
 from natsort import natsorted
-import os, time, cv2, re, pathlib, glob, shutil, subprocess
+import os, cv2, re, pathlib, glob, shutil, subprocess
 import matplotlib.pyplot as plt
+from collections import defaultdict
 from scipy.ndimage import gaussian_filter, binary_fill_holes
 from skimage.morphology import remove_small_objects, binary_closing, disk
 from skimage.measure import label, regionprops
+from itertools import chain
 
-import matplotlib # for some reason using the 'agg' 
-matplotlib.use('TkAgg')#)'qtagg')
+# import matplotlib # for some reason using the 'agg' 
+# matplotlib.use('TkAgg')#)'qtagg')
 
 def open_file_explorer(img_export_path):
     if not os.path.exists(img_export_path):
@@ -400,13 +402,13 @@ def display_images2(images, blocking=False, fig=None, axes=None, title=None):
             plt.draw()
             plt.pause(blocking)
 
-def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000, i = 0):
+def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000, extra_thresh_bump = 0, i = 0):
     
     # this algorithm is supposed to be an exact match to the matlab (base) version
     for j in range(1,7):
         check_flag = True
         # create first threshold
-        this_thresh = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j-1))
+        this_thresh = np.mean(data_norm) + (np.std(data_norm)*(1/5)*(j-1 + extra_thresh_bump))
         # create a mask
         this_mask = matlab_gaussian_filter(data_norm,2) > this_thresh
         # remove any small blobs from the mask
@@ -423,7 +425,7 @@ def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000, i = 0):
             for k in range( int(np.max(this_label))):
                 label_sizes.append(np.sum(this_label==(k+1)))
 
-            if np.sum((np.asarray(label_sizes)/(this_img.shape[0]*this_img.shape[1]))>0.18):
+            if np.sum((np.asarray(label_sizes)/(this_img.shape[0]*this_img.shape[1]))>0.10):
                 print('LARGE MASK DETECTED ATTEMPT FIX')
                 j = j+1
                 check_flag = False
@@ -444,6 +446,71 @@ def segment_blobs_from_image(data_norm,this_img,min_worm_size = 3000, i = 0):
                 break
     
     return this_mask, this_label
+
+def group_strings(strings):
+    grouped_strings = defaultdict(dict)
+    
+    for string in strings:
+        parts = string.split('_')
+        prefix = parts[0]  # Extract prefix
+        day = parts[-2][1:]  # Extract day number
+        experiment = '_'.join(parts[1:-2])  # Extract experiment name
+        if prefix not in grouped_strings:
+            grouped_strings[prefix] = defaultdict(dict)
+        if day not in grouped_strings[prefix][experiment]:
+            grouped_strings[prefix][experiment][day] = []
+        grouped_strings[prefix][experiment][day].append(string)
+    
+    return grouped_strings
+
+def remove_single_digit_suffix(strings):
+    updated_strings = []
+    for string in strings:
+        parts = re.split(' |_', string)
+        if parts[-1].isdigit() and len(parts[-1]) == 1:
+            # Remove the last part if it's a single digit
+            updated_string = string[:-1]
+            if updated_string[-1] == ' ' or updated_string[-1] == '_':
+                updated_string = updated_string[:-1]
+        else:
+            updated_string = string
+        updated_strings.append(updated_string)
+    return updated_strings
+
+def analysis_and_export_data(df,selected_directory,output_path,final_save_name):
+
+    a = df.iloc[:,1:6].values
+    b = df.iloc[:,6:].values
+
+    c = np.divide(a, b, out=np.zeros_like(a), where=b!=0)
+    img_names = df['Image names'].values
+
+    # first this normalizes the data by the area found from each worm
+    # then it groups the images by removing the final number of each of the image name
+    # then it sorts them
+
+    img_groups_by_session = remove_single_digit_suffix(img_names)
+    img_groups_by_session_unique = natsorted(np.unique(img_groups_by_session))
+
+    flattened_data = []
+    for i,this_img_name in enumerate(img_groups_by_session_unique):
+        temp_data = []
+        for j, s in enumerate(img_names):
+            if this_img_name in s:
+                # print(img_groups_by_session_unique[i])
+                temp_data.append(c[j,:])
+        temp_data = list(chain.from_iterable(temp_data))
+        flattened_data.append(temp_data)
+    max_len_data = int(np.max([len(i) for i in flattened_data]))
+
+    df_analysis = pd.DataFrame(columns = ['Image names'] + ['data' + str(i+1) for i in range(max_len_data)])
+    df_analysis['Image names'] = img_groups_by_session_unique
+    for i,this_data in enumerate(flattened_data):
+        df_analysis.iloc[i,1: (1+ len(this_data))] = this_data
+
+    df_analysis.to_csv(os.path.join(selected_directory,'Analyzed_data_python.csv'), index=False)
+
+    return df_analysis
 
 if __name__ ==  "__main__":
     # Get user inputs
@@ -532,7 +599,7 @@ if __name__ ==  "__main__":
         if np.max(this_label) == 0 or np.max(this_label)==1:
             print('Warning: NO WORMS FOUND USING STANDARD METHODS ON - ', img_names[i])
             print('Reducing minimum blob size from', min_worm_size, ' to ', str(1000))
-            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000)
+            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000,extra_thresh_bump=1, i = i)
 
         # if there are many blobks still detected only take the N largest
         if np.max(this_label) > number_worms_to_detect:
@@ -544,6 +611,8 @@ if __name__ ==  "__main__":
         if np.max(this_label) < number_worms_to_detect:
             print('Warning: LESS than ', (number_worms_to_detect),' worms detected - ', img_names[i])
             print('Using only the ',np.max(this_label),' largest blobs')
+
+            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000,extra_thresh_bump=1, i = i)
 
             this_mask, returned_areas = bwareafilt(this_mask,n = number_worms_to_detect)
 
@@ -589,7 +658,14 @@ if __name__ ==  "__main__":
     df.iloc[:,6:] = image_integral_area
     df.to_csv(os.path.join(selected_directory,'data_python.csv'), index = False)
 
+    print('Data exported at:')
+    print(os.path.join(selected_directory,'data_python.csv'))
+
     # Close Tkinter window after the loop completes
     root_progressbar.destroy()
+
+    df_analyzed = analysis_and_export_data(df,selected_directory,output_path,final_save_name)
+    print('Analyzed data exported at')
+    print(os.path.join(selected_directory,'Analyzed_data_python.csv'))
 
     print('eof')
