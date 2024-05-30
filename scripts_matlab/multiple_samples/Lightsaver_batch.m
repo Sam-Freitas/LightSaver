@@ -44,14 +44,15 @@ clearvars dims definput dlgtitle prompt answer
 
 % get current path
 curr_path = pwd;
+LightSaver_path = curr_path(1:(strfind(curr_path,'LightSaver')+length('LightSaver')));
 
-data_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'data');
+data_path = fullfile(LightSaver_path,'data');
 
 img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
 
 [~,final_save_name,~] = fileparts(img_dir_path);
 
-output_path = fullfile(erase(erase(curr_path,'multiple_samples'),'scripts'),'exported_images');
+output_path = fullfile(LightSaver_path,'exported_images');
 mkdir(output_path);
 
 if isempty(output_name)
@@ -253,7 +254,7 @@ for i = 1:length(img_paths)
 end
 
 T = cell2table(output_csv(2:end,:),'VariableNames',output_csv(1,:));
-writetable(T,fullfile(char(img_dir_path),'data.csv'))
+writetable(T,fullfile(char(img_dir_path),'data_matlab.csv'))
 
 if isfile(fullfile(data_path,[final_save_name '.csv']))
     writetable(T,fullfile(data_path,[final_save_name,datestr(now, 'dd-mmm-yyyy'),'_.csv']))
@@ -464,7 +465,7 @@ fprintf('\nThere are %i total files & folders in the overarching folder.\n',nume
 
 allNamesFull = join(cat(1,fileNames,fileExts),'',1);
 
-CSVidx = ismember(allNamesFull,'data.csv');    % Search ext for "CSV" at the end
+CSVidx = ismember(allNamesFull,'data_matlab.csv');    % Search ext for "CSV" at the end
 CSV_filepaths = {message(CSVidx).Name};  % Use CSVidx to list all paths.
 
 fprintf('There are %i files with *data.csv names.\n',numel(CSV_filepaths));
@@ -650,7 +651,7 @@ for i = 1:length(condition_names)
     end
 end
 
-writecell(final_array,fullfile(exp_dir_path,'Analyzed_data.csv'));
+writecell(final_array,fullfile(exp_dir_path,'Analyzed_data_matlab.csv'));
 
 disp(['Exported analyzed data to:'])
 disp(fullfile(exp_dir_path,'Analyzed_data.csv'));
