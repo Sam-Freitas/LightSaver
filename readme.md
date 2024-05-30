@@ -26,12 +26,12 @@
 ## Usage: Automatic Data Processing/Exporting/Analyzing of an Entire Experiment (Recommended)
 
 1. Set up data as shown above.
-2. Open `Lightsaver_batch.m` under the `multiple_samples` directory.
-3. Run the script (press F5 or the run button in MATLAB).
+2. Open `Lightsaver_batch.m` or `LightSaver_batch.py` under the respective python or matlab directories.
+3. Run the script (press F5 or the run button in MATLAB or your choice of python IDE -- vscode tested).
 4. The parameters prompt will ask for experiment-specific details (press OK when completed).
 5. Choose the overarching experiment folder in the selection prompt.
 6. The script will display progress bars and export the data.
-7. Check the "Exported images" folder (usually in documents/github/lightsaver) for the output. Rerun with the "Use large blob fix" flag if needed.
+7. Check the "Exported images" folder (usually in documents/github/LightSaver) for the output. Rerun with the "Use large blob fix" flag if needed.
 
 ## Usage: Data Processing Single Sub-Experiments Individually (Not Recommended Unless Data Is Extremely Noisy and "Bad_images_fix.m" Must Be Used)
 
