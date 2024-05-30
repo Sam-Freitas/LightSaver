@@ -22,6 +22,7 @@
 
 **Image Naming Guidelines:**
 - Each image should have a descriptive name (e.g., `skn-1-HT115-EV_D1_1.tiff`, `skn-1-HT115-EV_D1_2.tiff`). The naming convention typically follows `exp-name-and-sumbnames_dayN_replicateN.tiff`.
+- The `Data analysis and export` section of the code will check for a number at the end of each file name (replicateN), additionally the system groups by removing any and all items that are consistent between ALL of the image names. Therefore if an unexpected result pops up the first check should be the image names and MAKING SURE that they are consistent with each other 
 
 ## Usage: Automatic Data Processing/Exporting/Analyzing of an Entire Experiment (Recommended)
 
