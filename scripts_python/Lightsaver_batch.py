@@ -1,9 +1,8 @@
-import tkinter as tk
-import numpy as np, pandas as pd
-from tkinter import simpledialog, filedialog, ttk
+import numpy as np
+import pandas as pd
 from fnmatch import fnmatch
 from natsort import natsorted
-import os, cv2, re, pathlib, glob, shutil, subprocess
+import os, cv2, re, pathlib, shutil, subprocess
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from scipy.ndimage import gaussian_filter, binary_fill_holes
@@ -11,7 +10,10 @@ from skimage.morphology import remove_small_objects, binary_closing, disk
 from skimage.measure import label, regionprops
 from itertools import chain
 
-# import matplotlib # for some reason using the 'agg' 
+from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QFileDialog, QLineEdit, QPushButton, QFormLayout
+from PyQt6.QtCore import Qt
+
+import matplotlib # for some reason using the 'agg' 
 # matplotlib.use('TkAgg')#)'qtagg')
 
 def open_file_explorer(img_export_path):
@@ -233,94 +235,91 @@ def clean_img_names(img_paths):
             non_counter += 1
     
     if counter == len(img_paths):
+        show_warning = False
         print('Correct amount of img paths and img names detected')
     else:
+        show_warning = True
         print('WARNING:: ')
         print('WARNING:: ')
         print('Naming scheme is not consistent and MOST LIKELY needs to be redone -- EXPORT MIGHT BE WRONG')
         print('Please remove extraneous information from the image names')
 
-    return cleaned_file_names
+    return cleaned_file_names, show_warning
 
 def get_directory():
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-
-    # Make the window starts on top
-    root.attributes('-topmost', True)
-    root.update()
-    root.attributes('-topmost', False)
-
-    # get the os a current path for data selections
-    detected_opterating_system = os.name
-    current_path = os.getcwd()
+    # Get the operating system's current path for data selections
+    detected_operating_system = os.name
     current_path = str(pathlib.Path(__file__).parent.resolve())
-    print("CURRENT PATH",current_path)
+    print("CURRENT PATH", current_path)
 
-    # find where the lightsaver script is being ran from for data selection
+    # Find where the LightSaver script is being run from for data selection
     idx_of_lightsvr = current_path.rfind('LightSaver')
 
-    # if in the defualt folders then do nothing
+    # If in the default folders then do nothing
     if idx_of_lightsvr != -1:
-        initial_dir = os.path.join(current_path[:idx_of_lightsvr+11],'data')
-    else: # if not the defualt to 'documents' folder 
+        initial_dir = os.path.join(current_path[:idx_of_lightsvr + 11], 'data')
+    else:  # If not, default to 'documents' folder
         # Determine the default documents folder based on the operating system
-        if detected_opterating_system == 'posix':  # Linux or macOS
+        if detected_operating_system == 'posix':  # Linux or macOS
             initial_dir = os.path.expanduser("~/Documents")
-        elif detected_opterating_system == 'nt':   # Windows
+        elif detected_operating_system == 'nt':  # Windows
             initial_dir = os.path.join(os.path.expanduser("~"), "Documents")
         else:
             initial_dir = os.getcwd()  # Fallback to current directory
-    
-    # make the output path for all the images
-    output_path = os.path.join(current_path[:idx_of_lightsvr+11],'exported_images')
 
-    # use the gui to make the data selection
-    directory = filedialog.askdirectory(initialdir=initial_dir)
+    # Make the output path for all the images
+    output_path = os.path.join(current_path[:idx_of_lightsvr + 11], 'exported_images')
+
+    # Use the GUI to make the data selection
+    directory = QFileDialog.getExistingDirectory(caption="Select Directory", directory=initial_dir)
 
     return directory, output_path
 
 def get_user_inputs():
-    root = tk.Tk()
-    # Make the window starts on top
-    root.attributes('-topmost', True)
-    root.update()
-    root.attributes('-topmost', False)
-    root.title("User Inputs for Lightsaver")
-
     defaults = ['5', '0', '0', '', '1', '1', '1', '0']  # Default values for each input field
 
-    fields = ['Number of worms to detect:',
-              'Show output images - yes(1) - no(0):',
-              'Use large blob fix - yes (1) - no(0):',
-              'Output name - leave blank for defaults - or enter name for exported_images sub-folder:',
-              'Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files:',
-              'Export processed images - yes (1) - no (0):',
-              'Automatic data analysis and export - yes (1) - no (0):',
-              'Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0):']
+    fields = [
+        'Number of worms to detect:',
+        'Show output images - yes(1) - no(0):',
+        'NOT IMPLEMENTED YET -- Use large blob fix - yes (1) - no (0):',
+        'NOT IMPLEMENTED YET -- Output name - leave blank for defaults - or enter name for exported_images sub-folder:',
+        'NOT IMPLEMENTED YET -- Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files:',
+        'Export processed images - yes (1) - no (0):',
+        'Automatic data analysis and export - yes (1) - no (0):',
+        'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0):'
+    ]
 
+    # Create a dialog window
+    dialog = QDialog()
+    dialog.setWindowTitle("User Inputs for Lightsaver")
+    layout = QVBoxLayout(dialog)
+
+    form_layout = QFormLayout()
     entries = []
+
     for i, field in enumerate(fields):
-        row = tk.Frame(root)
-        label = tk.Label(row, width=75, text=field, anchor='w')
-        entry = tk.Entry(row)
-        entry.insert(0, defaults[i])  # Insert default value
-        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        label.pack(side=tk.LEFT)
-        entry.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        label = QLabel(field)
+        entry = QLineEdit()
+        entry.setText(defaults[i])  # Insert default value
+        form_layout.addRow(label, entry)
         entries.append(entry)
 
+    layout.addLayout(form_layout)
+
+    submit_button = QPushButton("Submit")
+    layout.addWidget(submit_button)
+
     def get_input():
-        inputs = [e.get() for e in entries]
-        root.destroy()  # Close the window
+        inputs = [entry.text() for entry in entries]
+        dialog.accept()  # Close the dialog
         return inputs
 
-    button = tk.Button(root, text='Submit', command=lambda: root.quit())
-    button.pack(side=tk.BOTTOM, padx=5, pady=5)
+    submit_button.clicked.connect(dialog.accept)
 
-    root.mainloop()
-
-    return get_input()
+    dialog.setLayout(layout)
+    if dialog.exec() == QDialog.DialogCode.Accepted:
+        inputs = get_input()
+        return inputs
 
 def convert_user_inputs(inputs):
 
@@ -336,35 +335,41 @@ def convert_user_inputs(inputs):
     return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it
 
 def create_progress_window():
-    # Create Tkinter window
-    root_progressbar = tk.Tk()
-    # make sure the window starts on top
-    root_progressbar.attributes('-topmost', True)
-    root_progressbar.update()
-    root_progressbar.attributes('-topmost', False)
+    # Create dialog window
+    root_progressbar = QDialog()
+    root_progressbar.setWindowTitle("Progress Bar")
+    root_progressbar.setWindowFlags(root_progressbar.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 
-    root_progressbar.title("Progress Bar")
+    # Create vertical layout
+    layout = QVBoxLayout()
 
     # Create progress bar
-    progress_bar = ttk.Progressbar(root_progressbar, orient='horizontal', length=1000, mode='determinate')
-    progress_bar.pack(pady=10)
+    progress_bar = QProgressBar()
+    progress_bar.setOrientation(Qt.Orientation.Horizontal)
+    progress_bar.setMaximum(100)
+    progress_bar.setMinimum(0)
+    layout.addWidget(progress_bar)
 
     # Create label for displaying text over the progress bar
-    progress_bar_label = tk.Label(root_progressbar, text="", anchor="w")
-    progress_bar_label.pack()
+    progress_bar_label = QLabel("")
+    progress_bar_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    layout.addWidget(progress_bar_label)
+
+    root_progressbar.setLayout(layout)
+    root_progressbar.show()
 
     return root_progressbar, progress_bar, progress_bar_label
 
 def update_progress_bar(progress_bar, label, current_iteration, total, text=""):
-    progress_bar['value'] = (current_iteration / total) * 100
-    # print("Progress: {:.1f}%".format(current_iteration / total * 100), end='\r')
+    progress_percentage = (current_iteration / total) * 100
+    progress_bar.setValue(int(progress_percentage))
 
     # Update label text
-    text = text[:100]  # Limit text length to 50 characters
+    text = text[:100]  # Limit text length to 100 characters
     text = text.ljust(50)  # Pad text with spaces to ensure consistent display width
-    label.config(text=text)
+    label.setText(text)
 
-    progress_bar.update()  # Update the progress bar
+    QApplication.processEvents()  # Update the progress bar
 
 def display_images(images, blocking = False, fig = None, axes = None, title = None):
     if fig == None and axes == None:
@@ -513,6 +518,7 @@ def analysis_and_export_data(df,selected_directory,output_path,final_save_name):
     return df_analysis
 
 if __name__ ==  "__main__":
+    app = QApplication([])
     # Get user inputs
     inputs = get_user_inputs()
     [number_worms_to_detect,
@@ -562,7 +568,7 @@ if __name__ ==  "__main__":
 
     # this is for the export names, just cleans them up and removes ANYTHING that is the same across all names
     # it also removes any usages of the 001,002,003...009 from the names (from leica weird export stuff)
-    img_names = clean_img_names(img_paths)
+    img_names, show_warning = clean_img_names(img_paths)
     # Set total iterations and set up the progress bar
     root_progressbar, progress_bar, progress_bar_label = create_progress_window()
 
@@ -586,7 +592,7 @@ if __name__ ==  "__main__":
     for i in range(len(img_paths)):
         print(i,img_names[i])
         # Update progress bar
-        update_progress_bar(progress_bar, progress_bar_label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i+1) + '/' + str(len(img_paths)))
+        update_progress_bar(progress_bar, progress_bar_label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i) + '/' + str(len(img_paths)))
 
         data, this_img = load_fluor_image(img_paths,i,fill_value='median')#fill_value='median)
 
@@ -640,7 +646,7 @@ if __name__ ==  "__main__":
         if export_processed_images:
             labeled_masks_rgb = label_to_rgb(labeled_masks)
             out = resize_and_construct_grid([this_img,labeled_masks_rgb,masked_data], title=img_names[i])
-            cv2.imwrite(os.path.join(output_path,str(i+1) + '_' + img_names[i] + output_img_format),out)
+            cv2.imwrite(os.path.join(output_path,str(i) + '_' + img_names[i] + output_img_format),out)
 
         # time.sleep(0.1)
         
@@ -667,5 +673,11 @@ if __name__ ==  "__main__":
     df_analyzed = analysis_and_export_data(df,selected_directory,output_path,final_save_name)
     print('Analyzed data exported at')
     print(os.path.join(selected_directory,'Analyzed_data_python.csv'))
+
+    if show_warning:
+        print('WARNING:: ')
+        print('WARNING:: ')
+        print('Naming scheme is not consistent and MOST LIKELY needs to be redone -- EXPORT MIGHT BE WRONG')
+        print('Please remove extraneous information from the image names')
 
     print('eof')
