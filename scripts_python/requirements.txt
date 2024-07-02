@@ -6,5 +6,5 @@ opencv_python_headless==4.8.0.74
 pandas==2.0.3
 PyQt6==6.7.0
 PyQt6_sip==13.6.0
-scipy==1.14.0
-skimage==0.0
+scipy
+scikit-image
