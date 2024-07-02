@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgres
 from PyQt6.QtCore import Qt
 
 import matplotlib # for some reason using the 'agg' 
-# matplotlib.use('TkAgg')#)'qtagg')
+matplotlib.use('TkAgg')#)'qtagg')
 
 def open_file_explorer(img_export_path):
     if not os.path.exists(img_export_path):
@@ -276,7 +276,7 @@ def get_directory():
     return directory, output_path
 
 def get_user_inputs():
-    defaults = ['5', '0', '0', '', '1', '1', '1', '0']  # Default values for each input field
+    defaults = ['5', '0', '0', '', '1', '1', '1', '0', '1000']  # Default values for each input field
 
     fields = [
         'Number of worms to detect:',
@@ -286,7 +286,8 @@ def get_user_inputs():
         'NOT IMPLEMENTED YET -- Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files:',
         'Export processed images - yes (1) - no (0):',
         'Automatic data analysis and export - yes (1) - no (0):',
-        'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0):'
+        'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0):',
+        'Advanced - second tier minimum worm size threshold:'
     ]
 
     # Create a dialog window
@@ -331,8 +332,9 @@ def convert_user_inputs(inputs):
     export_processed_images = int(inputs[5])
     data_analysis_and_export_bool = int(inputs[6])
     experimental_name_has_conditions_in_it = int(inputs[7])
+    second_tier_minimum_worm_size = int(inputs[8])
 
-    return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it
+    return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it,second_tier_minimum_worm_size
 
 def create_progress_window():
     # Create dialog window
@@ -528,7 +530,8 @@ if __name__ ==  "__main__":
      rename_tifs_choice,
      export_processed_images,
      data_analysis_and_export_bool,
-     experimental_name_has_conditions_in_it] = convert_user_inputs(inputs)
+     experimental_name_has_conditions_in_it,
+     second_tier_minimum_worm_size,] = convert_user_inputs(inputs)
 
     # This is for the exported images
     # Faster is with the jpg format -> 0 but less quality on the images
@@ -604,8 +607,8 @@ if __name__ ==  "__main__":
         # if there are no blobs detetced. redo the last threshold and take the N largest
         if np.max(this_label) == 0 or np.max(this_label)==1:
             print('Warning: NO WORMS FOUND USING STANDARD METHODS ON - ', img_names[i])
-            print('Reducing minimum blob size from', min_worm_size, ' to ', str(1000))
-            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000,extra_thresh_bump=1, i = i)
+            print('Reducing minimum blob size from', min_worm_size, ' to ', str(second_tier_minimum_worm_size))
+            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = second_tier_minimum_worm_size,extra_thresh_bump=1, i = i)
 
         # if there are many blobks still detected only take the N largest
         if np.max(this_label) > number_worms_to_detect:
@@ -618,7 +621,7 @@ if __name__ ==  "__main__":
             print('Warning: LESS than ', (number_worms_to_detect),' worms detected - ', img_names[i])
             print('Using only the ',np.max(this_label),' largest blobs')
 
-            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = 1000,extra_thresh_bump=1, i = i)
+            this_mask, this_label = segment_blobs_from_image(data_norm,this_img,min_worm_size = second_tier_minimum_worm_size,extra_thresh_bump=1, i = i)
 
             this_mask, returned_areas = bwareafilt(this_mask,n = number_worms_to_detect)
 
