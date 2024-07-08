@@ -47,6 +47,7 @@ curr_path = pwd;
 LightSaver_path = curr_path(1:(strfind(curr_path,'LightSaver')+length('LightSaver')));
 
 data_path = fullfile(LightSaver_path,'data');
+mkdir(data_path)
 
 img_dir_path = uigetdir(data_path,'Please select the folder containing the *.tiff files');
 
@@ -88,6 +89,11 @@ img_paths = img_paths(sort_idx);
 [~,img_names,~] = fileparts(img_paths);
 
 [img_names] = clean_img_names(img_paths,img_names);
+
+if rename_tifs_choice
+    img_names = erase_001(img_names);
+    [img_names] = clean_img_names(img_paths,img_names);
+end
 
 image_integral_intensities = zeros(length(img_paths),number_worms_to_detect);
 image_integral_area = zeros(length(img_paths),number_worms_to_detect);
@@ -263,7 +269,7 @@ else
 end
 
 if data_analysis_and_export_bool
-    data_analysis_and_export_function(img_dir_path,experimental_name_has_conditions_in_it)
+    data_analysis_and_export_function(img_dir_path,experimental_name_has_conditions_in_it,data_path,final_save_name)
 end
 
 disp(' ')
@@ -451,7 +457,7 @@ end
 end
 
 
-function data_analysis_and_export_function(exp_dir_path,experimental_name_has_conditions_in_it)
+function data_analysis_and_export_function(exp_dir_path,experimental_name_has_conditions_in_it,data_path,final_save_name)
 
 % get exp name
 [~,experiment_name,~] = fileparts(exp_dir_path);
@@ -652,9 +658,13 @@ for i = 1:length(condition_names)
 end
 
 writecell(final_array,fullfile(exp_dir_path,'Analyzed_data_matlab.csv'));
+writecell(final_array,fullfile(data_path,[final_save_name '_Analyzed_data_matlab.csv']))
 
 disp(['Exported analyzed data to:'])
 disp(fullfile(exp_dir_path,'Analyzed_data.csv'));
+
+disp(['AND Exported analyzed data to:'])
+disp(fullfile(data_path,[final_save_name '_Analyzed_data_matlab.csv']));
 
 end
 
@@ -759,3 +769,22 @@ this_measurement = ocr_text(end-2:end);
 out = (this_scale/sum(this_line(:))) ^ 2;
 
 end
+
+function out = erase_001(img_names)
+
+things_to_erase = ["001","002","003","004","005","006","007","008","009"];%;,'003','004','005','006','007','008','009'];
+
+for i = 1:length(img_names)
+    
+    this_name = img_names{i};
+    this_name = erase(this_name,things_to_erase);
+
+    if ~matches(this_name,img_names{i})
+        img_names{i} = this_name;
+    end
+end
+
+out = img_names;
+end
+
+

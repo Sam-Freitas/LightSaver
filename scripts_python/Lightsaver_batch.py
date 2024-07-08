@@ -270,6 +270,9 @@ def get_directory():
     # Make the output path for all the images
     output_path = os.path.join(current_path[:idx_of_lightsvr + 11], 'exported_images')
 
+    os.makedirs(initial_dir,exist_ok=True)
+    os.makedirs(output_path,exist_ok=True)
+
     # Use the GUI to make the data selection
     directory = QFileDialog.getExistingDirectory(caption="Select Directory", directory=initial_dir)
 
