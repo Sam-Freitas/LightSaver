@@ -8,7 +8,7 @@
 
 ## Required MATLAB Packages
 - 'Image Processing Toolbox'
-- 'Computer Vision Toolbox'
+- 'Computer Vision Toolbox' (Install this one first, it should install the Image Processing Toolbox as well)
 
 ## File Parameters Setup
 
