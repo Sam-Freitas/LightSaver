@@ -13,7 +13,7 @@ Install Github Desktop (URL below) and register a Github account (highly suggest
 
 copy this URL
 
-```https://github.com/Sam-Freitas/SICKO```
+```https://github.com/Sam-Freitas/LightSaver```
 
 Go to File>Clone repository (Ctrl+Shift+O)
 On the top bar click on the URL tab
