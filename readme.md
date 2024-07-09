@@ -2,13 +2,33 @@
 
 ![LightSaver](img1.jpg)
 
-**LightSaver** is a powerful data analysis package designed for fluorescent C. elegans imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez at the University of Arizona, Sutphin Lab in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
+**LightSaver** is a powerful data analysis package designed for fluorescent C. elegans imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez, Vanessa Hofschneider, and Lainey Wait at the University of Arizona (Sutphin Lab) in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
 
 *Please note: We're actively working on both a Python version and a standalone application for enhanced accessibility.*
+
+## Installation (github desktop)
+Install Github Desktop (URL below) and register a Github account (highly suggested to NOT use your .edu account)
+
+```https://github.com/apps/desktop```
+
+copy this URL
+
+```https://github.com/Sam-Freitas/SICKO```
+
+Go to File>Clone repository (Ctrl+Shift+O)
+On the top bar click on the URL tab
+Paste the previously copied URL and click 'Clone'
 
 ## Required MATLAB Packages
 - 'Image Processing Toolbox'
 - 'Computer Vision Toolbox' (Install this one first, it should install the Image Processing Toolbox as well)
+
+  - Can be found under APPs (top bar) > Get More APPs > search and install 'Computer Vision Toolbox' 
+
+## Required Python Modules
+- matplotlib, natsort, numpy, opencv_python, opencv_python_headless, pandas, PyQt6, PyQt6_sip, scipy, scikit-image
+
+  - Can be installed via pip from the requirements.txt in the ```python_scripts``` folder in a terminal (powershell, cmd, etc) ```python -m pip install -r /path/to/scripts_python/requirements.txt```
 
 ## File Parameters Setup
 
@@ -22,7 +42,8 @@
 
 **Image Naming Guidelines:**
 - Each image should have a descriptive name (e.g., `skn-1-HT115-EV_D1_1.tiff`, `skn-1-HT115-EV_D1_2.tiff`). The naming convention typically follows `exp-name-and-sumbnames_dayN_replicateN.tiff`.
-- The `Data analysis and export` section of the code will check for a number at the end of each file name (replicateN), additionally the system groups by removing any and all items that are consistent between ALL of the image names. Therefore if an unexpected result pops up the first check should be the image names and MAKING SURE that they are consistent with each other 
+- The `Data analysis and export` section of the code will check for a number at the end of each file name (replicateN), additionally the system groups by removing any and all items that are consistent between ALL of the image names. Therefore if an unexpected result pops up the first check should be the image names and MAKING SURE that they are consistent with each other
+- Please be aware the system automatically removes anything matching `001`,`002`.....`009` from the image names, these are usually an unwanted addition by the "export" feature of microscopes
 
 ## Usage: Automatic Data Processing/Exporting/Analyzing of an Entire Experiment (Recommended)
 
