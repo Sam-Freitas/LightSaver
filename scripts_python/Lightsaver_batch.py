@@ -10,11 +10,11 @@ from skimage.morphology import remove_small_objects, binary_closing, disk
 from skimage.measure import label, regionprops
 from itertools import chain
 
-from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QFileDialog, QLineEdit, QPushButton, QFormLayout
+from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QFileDialog, QLineEdit, QPushButton, QFormLayout, QGridLayout
 from PyQt6.QtCore import Qt
 
 import matplotlib # for some reason using the 'agg' 
-matplotlib.use('TkAgg')#)'qtagg')
+matplotlib.use('qtagg')
 
 def open_file_explorer(img_export_path):
     if not os.path.exists(img_export_path):
@@ -298,17 +298,20 @@ def get_user_inputs():
     dialog.setWindowTitle("User Inputs for Lightsaver")
     layout = QVBoxLayout(dialog)
 
-    form_layout = QFormLayout()
+    grid_layout = QGridLayout()
+
     entries = []
 
     for i, field in enumerate(fields):
         label = QLabel(field)
+        label.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure the label is left-aligned
         entry = QLineEdit()
         entry.setText(defaults[i])  # Insert default value
-        form_layout.addRow(label, entry)
+        grid_layout.addWidget(label, i, 0, Qt.AlignmentFlag.AlignLeft)  # Left align label
+        grid_layout.addWidget(entry, i, 1)  # Add entry next to the label
         entries.append(entry)
 
-    layout.addLayout(form_layout)
+    layout.addLayout(grid_layout)
 
     submit_button = QPushButton("Submit")
     layout.addWidget(submit_button)
@@ -327,15 +330,18 @@ def get_user_inputs():
 
 def convert_user_inputs(inputs):
 
-    number_worms_to_detect = int(inputs[0])
-    show_output_images = int(inputs[1])
-    use_large_blob_fix = int(inputs[2])
-    output_name = inputs[3]
-    rename_tifs_choice = int(inputs[4])
-    export_processed_images = int(inputs[5])
-    data_analysis_and_export_bool = int(inputs[6])
-    experimental_name_has_conditions_in_it = int(inputs[7])
-    second_tier_minimum_worm_size = int(inputs[8])
+    try:
+        number_worms_to_detect = int(inputs[0])
+        show_output_images = int(inputs[1])
+        use_large_blob_fix = int(inputs[2])
+        output_name = inputs[3]
+        rename_tifs_choice = int(inputs[4])
+        export_processed_images = int(inputs[5])
+        data_analysis_and_export_bool = int(inputs[6])
+        experimental_name_has_conditions_in_it = int(inputs[7])
+        second_tier_minimum_worm_size = int(inputs[8])
+    except:
+        exit()
 
     return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it,second_tier_minimum_worm_size
 
@@ -393,6 +399,28 @@ def display_images(images, blocking = False, fig = None, axes = None, title = No
         plt.draw()
         plt.pause(blocking)
 
+def is_grayscale_or_1d(this_image):
+    """
+    Checks if the given image is grayscale or 1D.
+
+    Parameters:
+    this_image (np.ndarray): The image array.
+
+    Returns:
+    bool: True if the image is grayscale or 1D, False otherwise.
+    """
+    try:
+        if this_image.ndim == 2:  # Grayscale image
+            return True
+        if this_image.ndim == 3 and this_image.shape[2] == 1:  # Grayscale with single channel
+            return True
+        if this_image.shape[0] == 1 or this_image.shape[1] == 1:  # 1D image
+            return True
+        return False
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+
 def display_images2(images, blocking=False, fig=None, axes=None, title=None):
     if fig is None and axes is None:
         fig, axes = plt.subplots(2, 2, figsize=(8, 8))
@@ -402,7 +430,10 @@ def display_images2(images, blocking=False, fig=None, axes=None, title=None):
     if title is not None:
         fig.suptitle(title)  # Set title for the figure
     for i, ax in enumerate(axes.flat):
-        ax.imshow(images[i], cmap='gray')  # Assuming images are grayscale
+        if is_grayscale_or_1d(images[i]):
+            ax.imshow(images[i], cmap='gray')  # Assuming images are grayscale
+        else:
+            ax.imshow(images[i])
         ax.axis('off')
     fig.tight_layout()  # Adjust layout
     if blocking is not None:
@@ -570,7 +601,8 @@ if __name__ ==  "__main__":
 
     # check to make sure that there are acutally images in the directory
     if img_paths.__len__() == 0:
-        exit("No TIF images found")
+        print("No TIff images found")
+        exit()
 
     # this is for the export names, just cleans them up and removes ANYTHING that is the same across all names
     # it also removes any usages of the 001,002,003...009 from the names (from leica weird export stuff)
@@ -648,7 +680,7 @@ if __name__ ==  "__main__":
 
         # fig, axes = plt.subplots(2, 2, figsize=(8, 8))
         if show_output_images:
-            display_images2(np.asarray([data,new_mask,labeled_masks,masked_data]),blocking = blocking, fig=fig,axes=axes, title = img_names[i])
+            display_images2([this_img.astype(np.uint8),new_mask,labeled_masks,masked_data],blocking = blocking, fig=fig,axes=axes, title = img_names[i])
         if export_processed_images:
             labeled_masks_rgb = label_to_rgb(labeled_masks)
             out = resize_and_construct_grid([this_img,labeled_masks_rgb,masked_data], title=img_names[i])
