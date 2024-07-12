@@ -10,7 +10,7 @@ from skimage.morphology import remove_small_objects, binary_closing, disk
 from skimage.measure import label, regionprops
 from itertools import chain
 
-from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QFileDialog, QLineEdit, QPushButton, QFormLayout, QGridLayout
+from PyQt6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar, QFileDialog, QLineEdit, QPushButton, QFormLayout, QGridLayout, QCheckBox
 from PyQt6.QtCore import Qt
 
 import matplotlib # for some reason using the 'agg' 
@@ -284,12 +284,12 @@ def get_user_inputs():
     fields = [
         'Number of worms to detect:',
         'Show output images - yes(1) - no(0):',
-        'NOT IMPLEMENTED YET -- Use large blob fix - yes (1) - no (0):',
+        'NOT IMPLEMENTED YET -- Use large blob fix - yes(1) - no(0):',
         'NOT IMPLEMENTED YET -- Output name - leave blank for defaults - or enter name for exported_images sub-folder:',
         'NOT IMPLEMENTED YET -- Remove 001,002, etc, from tif names - yes(1) - no(0) Will overwrite data files:',
-        'Export processed images - yes (1) - no (0):',
-        'Automatic data analysis and export - yes (1) - no (0):',
-        'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes (1) - no (0):',
+        'Export processed images - yes(1) - no(0):',
+        'Automatic data analysis and export - yes(1) - no(0):',
+        'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes(1) - no(0):',
         'Advanced - second tier minimum worm size threshold:'
     ]
 
@@ -305,11 +305,20 @@ def get_user_inputs():
     for i, field in enumerate(fields):
         label = QLabel(field)
         label.setAlignment(Qt.AlignmentFlag.AlignLeft)  # Ensure the label is left-aligned
-        entry = QLineEdit()
-        entry.setText(defaults[i])  # Insert default value
-        grid_layout.addWidget(label, i, 0, Qt.AlignmentFlag.AlignLeft)  # Left align label
-        grid_layout.addWidget(entry, i, 1)  # Add entry next to the label
-        entries.append(entry)
+        
+        # Check if the field should be a toggle button
+        if "yes(1) - no(0)" in field:
+            checkbox = QCheckBox()
+            checkbox.setChecked(defaults[i] == '1')
+            grid_layout.addWidget(label, i, 0, Qt.AlignmentFlag.AlignLeft)  # Left align label
+            grid_layout.addWidget(checkbox, i, 1)  # Add checkbox next to the label
+            entries.append(checkbox)
+        else:
+            entry = QLineEdit()
+            entry.setText(defaults[i])  # Insert default value
+            grid_layout.addWidget(label, i, 0, Qt.AlignmentFlag.AlignLeft)  # Left align label
+            grid_layout.addWidget(entry, i, 1)  # Add entry next to the label
+            entries.append(entry)
 
     layout.addLayout(grid_layout)
 
@@ -317,7 +326,12 @@ def get_user_inputs():
     layout.addWidget(submit_button)
 
     def get_input():
-        inputs = [entry.text() for entry in entries]
+        inputs = []
+        for entry in entries:
+            if isinstance(entry, QCheckBox):
+                inputs.append('1' if entry.isChecked() else '0')
+            else:
+                inputs.append(entry.text())
         dialog.accept()  # Close the dialog
         return inputs
 
