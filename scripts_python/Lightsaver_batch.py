@@ -279,7 +279,7 @@ def get_directory():
     return directory, output_path
 
 def get_user_inputs():
-    defaults = ['5', '0', '0', '', '1', '1', '1', '0', '1000']  # Default values for each input field
+    defaults = ['5', '0', '0', '', '1', '1', '1', '0', '1000','0']  # Default values for each input field
 
     fields = [
         'Number of worms to detect:',
@@ -290,7 +290,8 @@ def get_user_inputs():
         'Export processed images - yes(1) - no(0):',
         'Automatic data analysis and export - yes(1) - no(0):',
         'NOT IMPLEMENTED YET -- Does the experiment folder have condition names in it? (ex: 01-1-11_N2_vs_SKN-1) - yes(1) - no(0):',
-        'Advanced - second tier minimum worm size threshold:'
+        'Advanced - second tier minimum worm size threshold:',
+        'Advanced - export separate images and labels - yes(1) - no(0):'
     ]
 
     # Create a dialog window
@@ -354,10 +355,11 @@ def convert_user_inputs(inputs):
         data_analysis_and_export_bool = int(inputs[6])
         experimental_name_has_conditions_in_it = int(inputs[7])
         second_tier_minimum_worm_size = int(inputs[8])
+        secondary_image_export = int(inputs[9])
     except:
         exit()
 
-    return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it,second_tier_minimum_worm_size
+    return number_worms_to_detect,show_output_images,use_large_blob_fix,output_name,rename_tifs_choice,export_processed_images,data_analysis_and_export_bool,experimental_name_has_conditions_in_it,second_tier_minimum_worm_size,secondary_image_export
 
 def create_progress_window():
     # Create dialog window
@@ -579,7 +581,8 @@ if __name__ ==  "__main__":
      export_processed_images,
      data_analysis_and_export_bool,
      experimental_name_has_conditions_in_it,
-     second_tier_minimum_worm_size,] = convert_user_inputs(inputs)
+     second_tier_minimum_worm_size,
+     secondary_image_export,] = convert_user_inputs(inputs)
 
     # This is for the exported images
     # Faster is with the jpg format -> 0 but less quality on the images
@@ -605,6 +608,23 @@ if __name__ ==  "__main__":
     os.makedirs(output_path,exist_ok=True)
     shutil.rmtree(output_path) ############################################ THIS IS TESTING ONLY IT DELETES THE EXPORTED IMGAGES 
     os.makedirs(output_path,exist_ok=True)
+
+    if secondary_image_export:
+        sec_img_path = os.path.join(output_path,'images')
+        sec_lab_path = os.path.join(output_path,'labels')
+        sec_test_path = os.path.join(output_path,'tests')
+
+        os.makedirs(sec_img_path,exist_ok=True)
+        shutil.rmtree(sec_img_path)
+        os.makedirs(sec_img_path,exist_ok=True)
+
+        os.makedirs(sec_lab_path,exist_ok=True)
+        shutil.rmtree(sec_lab_path)
+        os.makedirs(sec_lab_path,exist_ok=True)
+
+        os.makedirs(sec_test_path,exist_ok=True)
+        shutil.rmtree(sec_test_path)
+        os.makedirs(sec_test_path,exist_ok=True)
 
     # step through all the files in the selected data folder to get a list of the tif images paths
     pattern = "*.tif"
@@ -642,6 +662,8 @@ if __name__ ==  "__main__":
 
     # this is the main loop 
     for i in range(len(img_paths)):
+        warning_flag_too_many_blobs = False
+        warning_flag_minimum_not_reached = False
         print(i,img_names[i])
         # Update progress bar
         update_progress_bar(progress_bar, progress_bar_label, i, len(img_paths), text= '\t\t' + "Processing --- " + img_names[i] + '\t\t' + str(i) + '/' + str(len(img_paths)))
@@ -661,12 +683,14 @@ if __name__ ==  "__main__":
 
         # if there are many blobks still detected only take the N largest
         if np.max(this_label) > number_worms_to_detect:
+            warning_flag_too_many_blobs = True
             print('Warning: MORE than ', (number_worms_to_detect),' worms detected - ', img_names[i])
             print('Using only the ',(number_worms_to_detect),' largest blobs')
 
             this_mask, returned_areas = bwareafilt(this_mask,n = number_worms_to_detect)
 
         if np.max(this_label) < number_worms_to_detect:
+            warning_flag_minimum_not_reached = True
             print('Warning: LESS than ', (number_worms_to_detect),' worms detected - ', img_names[i])
             print('Using only the ',np.max(this_label),' largest blobs')
 
@@ -700,6 +724,16 @@ if __name__ ==  "__main__":
             out = resize_and_construct_grid([this_img,labeled_masks_rgb,masked_data], title=img_names[i])
             cv2.imwrite(os.path.join(output_path,str(i) + '_' + img_names[i] + output_img_format),out)
 
+        if secondary_image_export:
+            if warning_flag_minimum_not_reached or warning_flag_too_many_blobs:
+                cv2.imwrite(os.path.join(sec_test_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),data)
+            else:
+                secondary_label = (255*new_mask).astype(np.uint8)
+
+                cv2.imwrite(os.path.join(sec_img_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),data)
+                cv2.imwrite(os.path.join(sec_lab_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),secondary_label)
+
+        pass
         # time.sleep(0.1)
         
     # Print completion message after the loop
