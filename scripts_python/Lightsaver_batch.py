@@ -726,12 +726,15 @@ if __name__ ==  "__main__":
 
         if secondary_image_export:
             if warning_flag_minimum_not_reached or warning_flag_too_many_blobs:
-                cv2.imwrite(os.path.join(sec_test_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),data)
+                cv2.imwrite(os.path.join(sec_test_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),this_img)
+                cv2.imwrite(os.path.join(sec_test_path, 'LS_' + str(i) + '_' + img_names[i] + '_mod_' + output_img_format),data)
             else:
                 secondary_label = (255*new_mask).astype(np.uint8)
 
-                cv2.imwrite(os.path.join(sec_img_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),data)
+                cv2.imwrite(os.path.join(sec_img_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),this_img)
                 cv2.imwrite(os.path.join(sec_lab_path, 'LS_' + str(i) + '_' + img_names[i] + output_img_format),secondary_label)
+                cv2.imwrite(os.path.join(sec_img_path, 'LS_' + str(i) + '_' + img_names[i] + '_mod_' + output_img_format),data)
+                cv2.imwrite(os.path.join(sec_lab_path, 'LS_' + str(i) + '_' + img_names[i] + '_mod_' + output_img_format),secondary_label)
 
         pass
         # time.sleep(0.1)
