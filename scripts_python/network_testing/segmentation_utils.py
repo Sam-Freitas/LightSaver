@@ -989,6 +989,7 @@ def write_outputs_to_images(inputs, outputs, output_path, i = 0, j = '', binary_
             write_jpeg(out,os.path.join(output_path,str(i) + str(j) + '.jpg'),100)
         except:
             time.sleep(0.1)
+            os.makedirs(output_path,exist_ok=True)
             write_jpeg(out,os.path.join(output_path,str(i) +  str(j) + '.jpg'),100)
     else:
         out = (torch.concatenate((BW_toutputs, BW_toutputs, BW_toutputs ), dim = 0)*255).to(torch.uint8).cpu()

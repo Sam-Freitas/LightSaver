@@ -47,6 +47,8 @@ def data_transforms(p=0):
         # for smaller datasets very important
         A.D4(p=0.75),
 
+        RotateSelfOverlay(p=p,angle_limit=180),
+
         # apply noise to the image
         A.ShotNoise(scale_range=(0.1, 0.33), p=p),
 
@@ -149,36 +151,110 @@ class RandomBlobNoise(A.ImageOnlyTransform):
 
         return img
 
-augmentation_P = 0.25
+class RotateSelfOverlay(A.DualTransform):
 
+    def __init__(
+        self,
+        angle_limit=180,
+        image_blend=0.5,
+        p=0.5
+    ):
+        super().__init__(p=p)
+
+        self.angle_limit = angle_limit
+        self.image_blend = image_blend
+
+    def _rotate(self, img, angle, interp):
+        h, w = img.shape[:2]
+
+        M = cv2.getRotationMatrix2D((w/2, h/2), angle, 1.0)
+
+        return cv2.warpAffine(
+            img,
+            M,
+            (w, h),
+            flags=interp,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0
+        )
+
+    def apply(self, img, angle=0, **params):
+
+        is_tensor = torch.is_tensor(img)
+
+        if is_tensor:
+            img = img.cpu().numpy()
+
+        img_f = img.astype(np.float32)
+
+        rotated = self._rotate(img_f, angle, cv2.INTER_LINEAR)
+
+        # blend original + rotated
+        out = (1 - self.image_blend) * img_f + self.image_blend * rotated
+
+        if is_tensor:
+            return torch.from_numpy(out)
+
+        return out
+
+    def apply_to_mask(self, mask, angle=0, **params):
+
+        is_tensor = torch.is_tensor(mask)
+
+        if is_tensor:
+            mask = mask.cpu().numpy()
+
+        # promote dtype to avoid clipping
+        mask_acc = mask.astype(np.float32)
+
+        rotated = self._rotate(mask_acc, angle, cv2.INTER_NEAREST)
+
+        # accumulate masks without clipping
+        out = mask_acc + rotated
+        out = (out>0)*(mask.max()).astype(mask.dtype)
+
+        if is_tensor:
+            return torch.from_numpy(out)
+        else:
+            pass
+
+        return out
+
+    def get_params(self):
+
+        angle = self.random_generator.uniform(
+            -self.angle_limit,
+            self.angle_limit
+        )
+
+        return {"angle": angle}
+
+augmentation_P = 0.25
 
 # Define the augmentation pipeline
 training_transforms = data_transforms(p=augmentation_P)
 
 # define the augmentation pipeline
-validation_transforms = data_transforms(p=0.051922)
+validation_transforms = data_transforms(p=0.0)
 
-# Define the augmentation pipeline
-# validation_transforms = A.Compose([
-#     # Tensor conversion
-#     ToTensorV2()
-# ])
+# define the testing pipeline
+testing_transforms = data_transforms(p=0.094276)
 
 load_weights = False #False
 batch_size = int((384-64)/6) #124 #4
-early_stop_patience = 25
-training_epochs = 1000
+early_stop_patience = 250
+training_epochs = 100000
 use_h5 = True
 
 # set up all the pathings for graphs, trained weights, and intermediate outputs
 graph_output_path = os.path.dirname(os.path.abspath(__file__))
 
 p_str = str(augmentation_P).replace('.','')
-weights_outputs_path = os.path.join(graph_output_path,'trained_weights_indiv_worm_p' + p_str)
+weights_outputs_path = os.path.join(graph_output_path,'trained_weights_indiv_worm_' + 'imgsz'+ str(img_size) +'_p' + p_str)
 os.makedirs(weights_outputs_path,exist_ok=True)
 
 timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-output_path =  os.path.join(graph_output_path,'output_training_model_worm_segmenter' + p_str)
+output_path =  os.path.join(graph_output_path,'output_training_model_worm_segmenter_' +'imgsz'+ str(img_size) +'_p'+ p_str)
 os.makedirs(output_path,exist_ok=True)
 
 imgs_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\exported_images\data\images"
@@ -208,7 +284,8 @@ model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2
     # decoder_pab_channels=64, 
     in_channels=1, 
     classes=1, 
-    activation='sigmoid', aux_params=aux_params
+    activation='sigmoid', 
+    aux_params=aux_params
 ).to(device)
 
 loss_fn = BCEDiceLoss()
@@ -244,7 +321,7 @@ else:
 
 training_dataset = SegmentationDataset(X_train,y_train, device = device, transforms=training_transforms, blur_masks=False)
 validation_dataset = SegmentationDataset(X_val,y_val, device = device, transforms=validation_transforms, blur_masks=False) ##################whyyyyyyyyyyyyyyyy
-testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, transforms=validation_transforms)
+testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, transforms=testing_transforms)
 
 training_loader = torch.utils.data.DataLoader(training_dataset, batch_size = batch_size, shuffle = True)
 validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size = batch_size, shuffle = True)

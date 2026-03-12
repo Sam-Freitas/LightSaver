@@ -28,7 +28,7 @@ testing_transforms = A.Compose([
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Skye Rounsville"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Image Aadith Mosur"
 testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Raul Castro"
-testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Robert Railey"
+# testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Robert Railey"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Brad Hull"
 image_paths = find_files(testing_path,file_extension='.tif')
 
@@ -38,7 +38,7 @@ output_path = os.path.join(output_path,os.path.split(testing_path)[-1])
 os.makedirs(output_path,exist_ok=True)
 del_dir_contents(output_path)
 
-batch_size = 64
+batch_size = 1
 testing_binary_threshold = 0.51
 img_size = 128
 # model = get_this_model()
@@ -63,7 +63,7 @@ model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2
 # load previously trained weights for the model and set it as evaluation mode 
 model.load_state_dict(
     torch.load(
-        r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_p025\model_20260306_115031_training.pt"
+        r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p025\model_20260312_091212_training.pt"
         , weights_only = True)) #### uncomment this to use a previously trained weights 
 model.eval()
 
