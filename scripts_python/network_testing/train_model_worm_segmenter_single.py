@@ -153,14 +153,8 @@ class RandomBlobNoise(A.ImageOnlyTransform):
 
 class RotateSelfOverlay(A.DualTransform):
 
-    def __init__(
-        self,
-        angle_limit=180,
-        image_blend=0.5,
-        p=0.5
-    ):
+    def __init__(self,angle_limit=180,image_blend=0.5,p=0.5):
         super().__init__(p=p)
-
         self.angle_limit = angle_limit
         self.image_blend = image_blend
 
@@ -169,14 +163,10 @@ class RotateSelfOverlay(A.DualTransform):
 
         M = cv2.getRotationMatrix2D((w/2, h/2), angle, 1.0)
 
-        return cv2.warpAffine(
-            img,
-            M,
-            (w, h),
+        return cv2.warpAffine(img,M,(w, h),
             flags=interp,
             borderMode=cv2.BORDER_CONSTANT,
-            borderValue=0
-        )
+            borderValue=0)
 
     def apply(self, img, angle=0, **params):
 
@@ -224,12 +214,10 @@ class RotateSelfOverlay(A.DualTransform):
 
         angle = self.random_generator.uniform(
             -self.angle_limit,
-            self.angle_limit
-        )
-
+            self.angle_limit)
         return {"angle": angle}
 
-augmentation_P = 0.25
+augmentation_P = 0.0483
 
 # Define the augmentation pipeline
 training_transforms = data_transforms(p=augmentation_P)
@@ -242,7 +230,7 @@ testing_transforms = data_transforms(p=0.094276)
 
 load_weights = False #False
 batch_size = int((384-64)/6) #124 #4
-early_stop_patience = 250
+early_stop_patience = 50
 training_epochs = 100000
 use_h5 = True
 

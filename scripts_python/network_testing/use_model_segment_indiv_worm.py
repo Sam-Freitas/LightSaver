@@ -23,13 +23,14 @@ testing_transforms = A.Compose([
     ToTensorV2()
 ])
 
-# testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\training data"
+testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\training data"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Kayla Miller"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Skye Rounsville"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Image Aadith Mosur"
-testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Raul Castro"
+# testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Raul Castro"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Robert Railey"
 # testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data\Leica Images Brad Hull"
+testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\data"
 image_paths = find_files(testing_path,file_extension='.tif')
 
 # specify outputs
@@ -60,17 +61,20 @@ model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2
     activation='sigmoid', aux_params=aux_params
 ).to(device)
 
+
+model_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00483\model_20260312_153227_training.pt"
+
+print(model_path)
 # load previously trained weights for the model and set it as evaluation mode 
 model.load_state_dict(
-    torch.load(
-        r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p025\model_20260312_091212_training.pt"
+    torch.load(model_path
         , weights_only = True)) #### uncomment this to use a previously trained weights 
 model.eval()
 
 all_test_imgs = read_all_images(
     image_paths, 
     transforms = preprocess_indiv_worm(img_size), 
-    number_to_stop_at = 1000000000000000000)
+    number_to_stop_at = 1000000000000)
 
 testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, transforms=testing_transforms,
                                         return_intial_img_aswell=True,return_path_aswell=True)
