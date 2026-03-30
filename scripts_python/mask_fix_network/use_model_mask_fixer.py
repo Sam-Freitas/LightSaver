@@ -23,7 +23,7 @@ testing_transforms = A.Compose([
     ToTensorV2()
 ])
 
-testing_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\exported_images\data\labels"
+testing_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\additional training data\labels"
 
 batch_size = 1
 testing_binary_threshold = 0.51
@@ -66,7 +66,8 @@ testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, tran
 testing_loader = torch.utils.data.DataLoader(testing_dataset, batch_size = 1, shuffle = False)
 
 # specify outputs
-output_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\outputs\output_testing_model_mask_fixer"
+output_path = os.path.join(os.path.split(testing_path)[0],'output_testing_model_mask_fixer')
+# output_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\outputs\output_testing_model_mask_fixer"
 os.makedirs(output_path,exist_ok=True)
 del_dir_contents(output_path)
 

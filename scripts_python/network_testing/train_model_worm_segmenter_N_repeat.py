@@ -305,78 +305,20 @@ class RandomBlankORNoise(A.DualTransform):
 
         return out
 
-
-augmentation_P = 0.0483
-validation_P = 0.0
-
-# Define the augmentation pipeline
-training_transforms = data_transforms(p=augmentation_P)
-validation_transforms = data_transforms(p=validation_P)
-testing_transforms = data_transforms(p=augmentation_P)
-
-load_weights = False #True #False
+load_weights = False #False
 batch_size = int((384-64)/6) #124 #4
-early_stop_patience = 100
-training_epochs = 1000
+early_stop_patience = 50
+training_epochs = 10
+N_repeats = 3 # how many time to run it 
+N_options = 10 # increasing iterations 
 use_h5 = True
 
-# set up all the pathings for graphs, trained weights, and intermediate outputs
-graph_output_path = os.path.dirname(os.path.abspath(__file__))
-
-p_str = str(augmentation_P).replace('.','')
-weights_outputs_path = os.path.join(graph_output_path,'trained_weights_indiv_worm_' + 'imgsz'+ str(img_size) +'_p' + p_str)
-os.makedirs(weights_outputs_path,exist_ok=True)
-
-timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-output_path =  os.path.join(graph_output_path,'output_training_model_worm_segmenter_' +'imgsz'+ str(img_size) +'_p'+ p_str)
-os.makedirs(output_path,exist_ok=True)
-
 imgs_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\images"
-# masks_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\exported_images\data\labels"
 masks_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\output_testing_model_mask_fixer" # this is the modified netowrk output
 testing_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\tests"
-
-inital_weights_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00483\model_20260319_140747_training.pt"
-
-####### this is now full sending with all the data
-########read in all the images and then use the "preprocess" to resize and convert them to grayscale (grayscale is just to make sure theyre single dim)
+inital_weights_path = r"outputs\trained_weights_indiv_worm\model_20251119_091131_training.pt"
 base_h5_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\h5"
 os.makedirs(base_h5_path,exist_ok=True)
-
-print('Initializing model')
-aux_params=dict(
-    pooling='max',             # one of 'avg', 'max'
-    dropout=0.3,               # dropout ratio, default is None
-    activation='sigmoid',             # activation function, default is None
-    classes=1,                 # define number of output labels
-)
-model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2net50_26w_4s', 
-    encoder_depth=5, #3, #5
-    encoder_weights= 'imagenet' , #
-    decoder_use_batchnorm=True, 
-    decoder_channels= (256, 128, 64, 32, 16),#(64, 32, 16),#(256, 128, 64, 32, 16),(256, 128, 64, 32, 16),
-    # decoder_pab_channels=64, 
-    in_channels=1, 
-    classes=1, 
-    activation='sigmoid', 
-    aux_params=aux_params
-).to(device)
-
-loss_fn = BCEDiceLoss()
-# optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
-optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
-
-optimizer = torch.optim.AdamW([
-    {"params": model.encoder.parameters(),          "lr": 1e-4},
-    {"params": model.decoder.parameters(),          "lr": 1e-2},
-    {"params": model.segmentation_head.parameters(),"lr": 1e-2},
-    {"params": model.classification_head.parameters(), "lr": 1e-2},
-], weight_decay=0.01)
-
-if load_weights:
-    print('Loading weights:', os.path.normpath(inital_weights_path))
-    model.load_state_dict(torch.load(inital_weights_path
-        ,weights_only=True)) #### uncomment this to use a previously trained weights 
 
 print('Loading in data:')
 if not use_h5:
@@ -400,36 +342,70 @@ else:
     all_test_imgs = torch.load(os.path.join(base_h5_path,"all_test_imgs.h5"),weights_only=False)
     print('finished loading h5 data')
 
-training_dataset = SegmentationDataset(X_train,y_train, device = device, transforms=training_transforms, blur_masks=False)
-validation_dataset = SegmentationDataset(X_val,y_val, device = device, transforms=validation_transforms, blur_masks=False) ##################whyyyyyyyyyyyyyyyy
-testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, transforms=testing_transforms)
+for i in range(N_options):
+    for j in range(N_repeats):
 
-training_loader = torch.utils.data.DataLoader(training_dataset, batch_size = batch_size, shuffle = True)
-validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size = batch_size, shuffle = True)
-testing_loader = torch.utils.data.DataLoader(testing_dataset, batch_size = batch_size, shuffle = False)
+        augmentation_P = 0.0483 * (i+1)
+        validation_P = 0.0
 
-model_path, training_losses = training_loop(model, EPOCHS = training_epochs, loss_fn = loss_fn, optimizer = optimizer, 
-                training_loader = training_loader, validation_loader = validation_loader, testing_loader = testing_loader, 
-                output_path = output_path, weights_outputs_path = weights_outputs_path, best_vloss = 100, 
-                timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
-                save_weights = 'last', save_weights_suffix = 'training', 
-                test_before_training = True,
-                graph_output_path = graph_output_path, use_early_stopping = True,
-                early_stop_patience= early_stop_patience)
-    
+        # Define the augmentation pipeline
+        training_transforms = data_transforms(p=augmentation_P)
+        validation_transforms = data_transforms(p=validation_P)
+        testing_transforms = data_transforms(p=augmentation_P)
 
-# ##########
-# ####### add random cropping, sunflare, snow, and salt and pepper
-# training_transforms = A.Compose([
-#     # A.augmentations.crops.transforms.CropAndPad(pad_cval=0,pad_cval_mask=0,keep_size=True,percent=[-0.15, 0.15],p = 0.25), # pad with zeros
-#     # A.augmentations.crops.transforms.CropAndPad(pad_mode=2,keep_size=True,percent=[-0.15, 0.15], p = 0.25), # pad with reflect 
-#     A.RandomGridShuffle(grid = (4,4), p = 0.25),
-#     # A.RandomResizedCrop(size=(img_size,img_size),scale=(0.2,1),p=0.33),
-#     A.D4(p=0.75),
-#     A.RandomBrightnessContrast(p=0.2),
-#     A.RandomGamma(p=augmentation_P),
-#     A.RandomToneCurve(p=augmentation_P),
-#     A.Rotate(p=0.2),
-#     A.CoarseDropout(num_holes_range=(1,6000), hole_height_range=(2,25), hole_width_range=(2,25), p = 0.25),
-#     ToTensorV2()
-# ])
+        training_dataset = SegmentationDataset(X_train,y_train, device = device, transforms=training_transforms, blur_masks=False)
+        validation_dataset = SegmentationDataset(X_val,y_val, device = device, transforms=validation_transforms, blur_masks=False) ##################whyyyyyyyyyyyyyyyy
+        testing_dataset = SegmentationDataset(all_test_imgs, None, device = device, transforms=testing_transforms)
+
+        training_loader = torch.utils.data.DataLoader(training_dataset, batch_size = batch_size, shuffle = True)
+        validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size = batch_size, shuffle = True)
+        testing_loader = torch.utils.data.DataLoader(testing_dataset, batch_size = batch_size, shuffle = False)
+
+        # set up all the pathings for graphs, trained weights, and intermediate outputs
+        graph_output_path = os.path.dirname(os.path.abspath(__file__))
+
+        N_str = str(i) + '_' + str(j)
+        weights_outputs_path = os.path.join(graph_output_path,'trained_weights_indiv_worm_' +'_N' + N_str)
+        os.makedirs(weights_outputs_path,exist_ok=True)
+
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_path =  os.path.join(graph_output_path,'output_training_model_worm_segmenter_' +'_N'+ N_str)
+        os.makedirs(output_path,exist_ok=True)
+
+        print('Initializing model')
+        aux_params=dict(
+            pooling='max',             # one of 'avg', 'max'
+            dropout=0.3,               # dropout ratio, default is None
+            activation='sigmoid',             # activation function, default is None
+            classes=1,                 # define number of output labels
+        )
+        model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2net50_26w_4s', 
+            encoder_depth=5, #3, #5
+            encoder_weights= 'imagenet' , #
+            decoder_use_batchnorm=True, 
+            decoder_channels= (256, 128, 64, 32, 16),#(64, 32, 16),#(256, 128, 64, 32, 16),(256, 128, 64, 32, 16),
+            # decoder_pab_channels=64, 
+            in_channels=1, 
+            classes=1, 
+            activation='sigmoid', 
+            aux_params=aux_params
+        ).to(device)
+
+        loss_fn = BCEDiceLoss()
+        # optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=0.001) #0.0001
+
+        if load_weights:
+            print('Loading weights:', os.path.normpath(inital_weights_path))
+            model.load_state_dict(torch.load(inital_weights_path
+                ,weights_only=True)) #### uncomment this to use a previously trained weights 
+
+        model_path, training_losses = training_loop(model, EPOCHS = training_epochs, loss_fn = loss_fn, optimizer = optimizer, 
+                        training_loader = training_loader, validation_loader = validation_loader, testing_loader = testing_loader, 
+                        output_path = output_path, weights_outputs_path = weights_outputs_path, best_vloss = 100, 
+                        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
+                        save_weights = 'last', save_weights_suffix = 'training', 
+                        test_before_training = True,
+                        graph_output_path = graph_output_path, use_early_stopping = True,
+                        early_stop_patience= early_stop_patience)
+        
