@@ -2,75 +2,174 @@
 
 ![LightSaver](img1.jpg)
 
-**LightSaver** is a powerful data analysis package designed for fluorescent C. elegans imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez, Vanessa Hofschneider, and Lainey Wait at the University of Arizona (Sutphin Lab) in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
+**LightSaver** is a powerful data analysis package designed for fluorescent *C. elegans* imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez, Vanessa Hofschneider, and Lainey Wait at the University of Arizona (Sutphin Lab) in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
 
-*Please note: We're actively working on both a Python version and a standalone application for enhanced accessibility.*
+> **Note:** LightSaver is available in both **MATLAB** and **Python** — choose whichever you're most comfortable with. Both versions produce identical results and output the same files.
 
-## Installation (github desktop)
-Install Github Desktop (URL below) and register a Github account (highly suggested to NOT use your .edu account)
+---
 
-```https://github.com/apps/desktop```
+## Step 1: Install GitHub Desktop and Download LightSaver
 
-copy this URL
+GitHub Desktop is a free application that lets you download and update LightSaver without using a terminal or command line.
 
-```https://github.com/Sam-Freitas/LightSaver```
+1. Download and install GitHub Desktop: [https://github.com/apps/desktop](https://github.com/apps/desktop)
+2. Create a free GitHub account at [https://github.com](https://github.com) — it's recommended **not** to use your `.edu` email for this
+3. Open GitHub Desktop, go to **File > Clone Repository** (or press `Ctrl+Shift+O`)
+4. Click the **URL** tab at the top of the dialog
+5. Paste this URL and click **Clone**:
 
-Go to File>Clone repository (Ctrl+Shift+O)
-On the top bar click on the URL tab
-Paste the previously copied URL and click 'Clone'
+```
+https://github.com/Sam-Freitas/LightSaver
+```
 
-## Required MATLAB Packages
-- 'Image Processing Toolbox'
-- 'Computer Vision Toolbox' (Install this one first, it should install the Image Processing Toolbox as well)
+LightSaver will be downloaded to your computer, typically into your `Documents/GitHub/LightSaver` folder.
 
-  - Can be found under APPs (top bar) > Get More APPs > search and install 'Computer Vision Toolbox' 
+<details>
+<summary>Prefer using a terminal instead? Click here.</summary>
 
-## Required Python Modules
-- matplotlib, natsort, numpy, opencv_python, opencv_python_headless, pandas, PyQt6, PyQt6_sip, scipy, scikit-image
+Open a terminal (PowerShell, Command Prompt, or macOS Terminal) and run:
 
-  - Can be installed via pip from the requirements.txt in the ```python_scripts``` folder in a terminal (powershell, cmd, etc) ```python -m pip install -r /path/to/scripts_python/requirements.txt```
+```bash
+git clone https://github.com/Sam-Freitas/LightSaver
+```
 
-## File Parameters Setup
+</details>
+
+---
+
+## Step 2: Set Up Your Version (MATLAB or Python)
+
+### Option A — MATLAB Setup
+
+**Required MATLAB Toolboxes:**
+- Computer Vision Toolbox *(install this first — it will automatically install the Image Processing Toolbox as well)*
+
+To install: go to **Apps** (top bar in MATLAB) → **Get More Apps** → search for **Computer Vision Toolbox** → Install
+
+### Option B — Python Setup
+
+**Required Python Modules:**
+`matplotlib`, `natsort`, `numpy`, `opencv_python`, `opencv_python_headless`, `pandas`, `PyQt6`, `PyQt6_sip`, `scipy`, `scikit-image`
+
+**Installation steps:**
+1. Open a terminal (PowerShell on Windows, or Terminal on macOS/Linux)
+2. Navigate to the `python_scripts` folder inside the LightSaver directory
+3. Run the following command, replacing the path with your actual path:
+
+```bash
+python -m pip install -r /path/to/python_scripts/requirements.txt
+```
+
+> **Tip:** In GitHub Desktop, you can right-click the repository and choose **Open in Terminal** to open a terminal already pointed at the correct folder.
+
+---
+
+## Step 3: Organize Your Data Files
+
+> [!WARNING]
+> **Never work directly on your original images.** Always copy your data to a new folder first and run LightSaver on the copy. The script CAN modify image files (naming schemas), and it is good practice to keep your raw data untouched and separate.
 
 ![File Setup](img2.jpg)
 
-> This directory structure is essential for the proper functioning of the `multiple_samples -> Lightsaver_batch.m` script. In this example, the overarching experiment is the "Example Experiment" folder under the data directory.
+LightSaver expects your images to be organized in a specific folder structure. This structure is required even if you only have a single timepoint.
 
-**Important Notes:**
-- The script scans files recursively, sorting them by timepoint (following the nomenclature DN, Day N).
-- Even if there's only a single timepoint, this directory format must still be followed, but with a single sub-experiment folder.
+**Required folder layout:**
+```
+Experiment Folder/           ← This is what you select when running the script
+    Day 1/                   ← Timepoint folders, named D1, D2, etc.
+        image_D1_1.tiff
+        image_D1_2.tiff
+    Day 2/
+        image_D2_1.tiff
+        image_D2_2.tiff
+```
 
-**Image Naming Guidelines:**
-- Each image should have a descriptive name (e.g., `skn-1-HT115-EV_D1_1.tiff`, `skn-1-HT115-EV_D1_2.tiff`). The naming convention typically follows `exp-name-and-sumbnames_dayN_replicateN.tiff`.
-- The `Data analysis and export` section of the code will check for a number at the end of each file name (replicateN), additionally the system groups by removing any and all items that are consistent between ALL of the image names. Therefore if an unexpected result pops up the first check should be the image names and MAKING SURE that they are consistent with each other
-- Please be aware the system automatically removes anything matching `001`,`002`.....`009` from the image names, these are usually an unwanted addition by the "export" feature of microscopes
+The script scans folders recursively and automatically sorts timepoints by day number (D1, D2, D3, etc.).
 
-## Usage: Automatic Data Processing/Exporting/Analyzing of an Entire Experiment (Recommended)
+**Image naming rules:**
+- Each image name should describe the experiment, timepoint, and replicate — for example: `skn-1-HT115-EV_D1_1.tiff`
+- The general convention is: `experiment-name_DayN_replicateN.tiff`
+- The replicate number at the end of each filename is used to group replicates together automatically
+- **Make sure all image names are consistent with each other.** The script automatically removes any part of the filename that is identical across *all* images in order to generate clean export labels. Inconsistent naming is the most common cause of unexpected results
+- Numbers matching the pattern `001`, `002` ... `009` are automatically stripped from filenames — these are typically added by microscope export software and are not needed
 
-1. Set up data as shown above.
-2. Open `Lightsaver_batch.m` or `LightSaver_batch.py` under the respective python or matlab directories.
-3. Run the script (press F5 or the run button in MATLAB or your choice of python IDE -- vscode tested).
-4. The parameters prompt will ask for experiment-specific details (press OK when completed).
-5. Choose the overarching experiment folder in the selection prompt.
-6. The script will display progress bars and export the data.
-7. Check the "Exported images" folder (usually in documents/github/LightSaver) for the output. Rerun with the "Use large blob fix" flag if needed.
+---
 
-## Usage: Data Processing Single Sub-Experiments Individually (Not Recommended Unless Data Is Extremely Noisy and "Bad_images_fix.m" Must Be Used)
+## Step 4: Run LightSaver
 
-1. Open `Ligthsaver_script.m`.
-2. Set parameters.
-3. Run `lightsaver_script.m`.
-4. Choose the directory containing the *.tiff* images.
-5. Check output data if necessary.
+Both MATLAB and Python versions run identically and produce the same output files.
 
-**If there are problems:**
-- Large blobs? Use the `large_blob_fix` option in `lightsaver_script.m`.
-- Major issues? Employ `bad_images_fix.m`.
+### Running the MATLAB version
 
-Now, you should find a `data.csv` file in the directory containing the *.tifs.
+1. Open MATLAB
+2. Open `Lightsaver_batch.m` from the `matlab_scripts` folder
+3. Press **F5** or click the **Run** button
+4. A parameters dialog will appear — fill in your experiment-specific settings and click **OK**
+5. A folder browser will open — navigate to and select your overarching **Experiment Folder** (the top-level folder containing all your day subfolders)
+6. LightSaver will process all images and show a progress bar
+7. When complete, the **Exported images** folder will open automatically (usually located at `Documents/GitHub/LightSaver/Exported images`)
 
-## Usage: Data Analysis (Automatically Analyzed When Using Recommended Settings)
+### Running the Python version
 
-1. Open and run `Data_analysis_and_export.m`.
-2. Choose the overarching experiment folder from the dropdown menu.
-3. Verify that "Analyzed_data.csv" is correct and the `output_figures` directory is present.
+1. Open `LightSaver_batch.py` from the `python_scripts` folder in your Python IDE (VS Code is recommended and tested)
+2. Press **F5** or click **Run**
+3. A parameters dialog will appear — fill in your experiment-specific settings and click **OK**
+4. A folder browser will open — navigate to and select your overarching **Experiment Folder**
+5. LightSaver will process all images and show a progress bar
+6. When complete, the **Exported images** folder will open automatically
+
+---
+
+## Output Files
+
+After processing, LightSaver produces the following files inside your Experiment Folder:
+
+| File | Description |
+|------|-------------|
+| `data.csv` *(MATLAB)* / `data_python.csv` *(Python)* | Raw per-image measurements: integrated fluorescence intensity and area for each detected worm |
+| `Analyzed_data.csv` *(MATLAB)* / `Analyzed_data_python.csv` *(Python)* | Summary statistics across replicates and timepoints |
+| `output_figures/` | Automatically generated plots of your experiment data |
+| `Exported images/` | Side-by-side processed image previews showing the original, segmentation mask, and masked fluorescence |
+
+> Both the MATLAB and Python versions produce equivalent data — the column names and structure of the CSVs are the same. The only difference is the filename (`data.csv` vs `data_python.csv`).
+
+---
+
+## Troubleshooting
+
+**Worms are being detected as one large blob?**
+- Re-run with the **"Use large blob fix"** option enabled in the parameters dialog
+
+**Images are extremely noisy or the results look wrong?**
+- MATLAB users: run `Lightsaver_script.m` on individual sub-experiment folders manually, then use `bad_images_fix.m` to correct problem images before re-running the batch script
+
+**Results look unexpected or grouping seems wrong?**
+- Check your image filenames first. Make sure they follow the `experiment-name_DayN_replicateN.tiff` convention and are consistent across all images in the experiment
+
+**No images found / script stops immediately?**
+- Make sure your images have the `.tif` or `.tiff` extension
+- Make sure your images are inside day-numbered subfolders (e.g., `D1/`, `D2/`), not loose in the experiment folder
+
+---
+
+## Running a Single Sub-Experiment (Advanced / Not Recommended)
+
+This approach is only needed if your data is extremely noisy and you need to manually review and fix individual images using `bad_images_fix.m` before proceeding.
+
+1. Open `Lightsaver_script.m` in MATLAB
+2. Set your parameters manually in the script
+3. Run the script and select the folder containing the `.tiff` images for that sub-experiment
+4. A `data.csv` file will be created in that folder
+5. If needed, run `bad_images_fix.m` to correct problem images, then repeat
+
+---
+
+## Data Analysis (Runs Automatically with Recommended Settings)
+
+When using the batch script (recommended), data analysis and figure export run automatically at the end of processing.
+
+If you need to re-run analysis separately:
+
+1. Open and run `Data_analysis_and_export.m` in MATLAB
+2. Select your overarching Experiment Folder from the dropdown
+3. Verify that `Analyzed_data.csv` and the `output_figures/` directory have been created
