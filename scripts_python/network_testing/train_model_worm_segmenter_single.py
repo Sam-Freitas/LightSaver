@@ -314,10 +314,10 @@ training_transforms = data_transforms(p=augmentation_P)
 validation_transforms = data_transforms(p=validation_P)
 testing_transforms = data_transforms(p=augmentation_P)
 
-load_weights = False #True #False
-batch_size = int((384-64)/6) #124 #4
-early_stop_patience = 100
-training_epochs = 1000
+load_weights = True #True #False
+batch_size = int(((384-64)/6)*2.5) #124 #4
+early_stop_patience = 1000
+training_epochs = 10000
 use_h5 = True
 
 # set up all the pathings for graphs, trained weights, and intermediate outputs
@@ -336,7 +336,7 @@ imgs_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\ima
 masks_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\output_testing_model_mask_fixer" # this is the modified netowrk output
 testing_path = r"C:\Users\LabPC2\Desktop\Lightsaver_training_data\compiled data\tests"
 
-inital_weights_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00483\model_20260319_140747_training.pt"
+inital_weights_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00966\model_20260331_121335_training.pt"
 
 ####### this is now full sending with all the data
 ########read in all the images and then use the "preprocess" to resize and convert them to grayscale (grayscale is just to make sure theyre single dim)
@@ -364,13 +364,13 @@ model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2
 
 loss_fn = BCEDiceLoss()
 # optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
-optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
+# optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
 
 optimizer = torch.optim.AdamW([
-    {"params": model.encoder.parameters(),          "lr": 1e-4},
-    {"params": model.decoder.parameters(),          "lr": 1e-2},
-    {"params": model.segmentation_head.parameters(),"lr": 1e-2},
-    {"params": model.classification_head.parameters(), "lr": 1e-2},
+    {"params": model.encoder.parameters(),          "lr": 1e-6},
+    {"params": model.decoder.parameters(),          "lr": 1e-5},
+    {"params": model.segmentation_head.parameters(),"lr": 1e-5},
+    {"params": model.classification_head.parameters(), "lr": 1e-5},
 ], weight_decay=0.01)
 
 if load_weights:

@@ -43,7 +43,7 @@ print(output_path,'\n')
 batch_size = 1
 testing_binary_threshold = 0.51
 img_size = 224
-lightsaver_output = True
+lightsaver_output = False
 
 aux_params=dict(
     pooling='max',             # one of 'avg', 'max'
@@ -63,7 +63,7 @@ model = smp.MAnet(encoder_name= 'resnet152',#'timm-res2net50_48w_2s',#'timm-res2
 ).to(device)
 
 # model_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz224_p00483\model_20260316_145746_training.pt"
-model_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00483\model_20260319_140747_training.pt"
+model_path = r"C:\Users\LabPC2\Documents\GitHub\LightSaver\scripts_python\network_testing\trained_weights_indiv_worm_imgsz128_p00483\model_20260401_134317_training.pt"
 
 print('Loading in model weights from:')
 print(model_path,'\n')
