@@ -4,7 +4,7 @@
 
 **LightSaver** is a powerful data analysis package designed for fluorescent *C. elegans* imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez, Vanessa Hofschneider, and Lainey Wait at the University of Arizona (Sutphin Lab) in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
 
-> **Note:** LightSaver is available in both **MATLAB** and **Python** — choose whichever you're most comfortable with. Both versions produce near identical results and output the same files.
+> **Note:** LightSaver is available in both **MATLAB** and **Python** — choose whichever you're most comfortable with. Both versions produce near-identical results and output the same files.
 
 ---
 
@@ -53,11 +53,11 @@ To install: go to **Apps** (top bar in MATLAB) → **Get More Apps** → search 
 
 **Installation steps:**
 1. Open a terminal (PowerShell on Windows, or Terminal on macOS/Linux)
-2. Navigate to the `python_scripts` folder inside the LightSaver directory
+2. Navigate to the `scripts_python` folder inside the LightSaver directory
 3. Run the following command, replacing the path with your actual path:
 
 ```bash
-python -m pip install -r /path/to/python_scripts/requirements.txt
+python -m pip install -r /path/to/scripts_python/requirements.txt
 ```
 
 > **Tip:** In GitHub Desktop, you can right-click the repository and choose **Open in Terminal** to open a terminal already pointed at the correct folder.
@@ -67,7 +67,7 @@ python -m pip install -r /path/to/python_scripts/requirements.txt
 ## Step 3: Organize Your Data Files
 
 > [!WARNING]
-> **Never work directly on your original images.** Always copy your data to a new folder first and run LightSaver on the copy. The script CAN modify image files (naming schemas), and it is good practice to keep your raw data untouched and separate.
+> **Never work directly on your original images.** Always copy your data to a new folder first and run LightSaver on the copy. The script can modify files (e.g. naming schemas), so it is essential to keep your raw data untouched and separate.
 
 ![File Setup](img2.jpg)
 
@@ -102,7 +102,7 @@ Both MATLAB and Python versions run identically and produce the same output file
 ### Running the MATLAB version
 
 1. Open MATLAB
-2. Open `Lightsaver_batch.m` from the `matlab_scripts` folder
+2. Open `Lightsaver_batch.m` from the `scripts_matlab` folder
 3. Press **F5** or click the **Run** button
 4. A parameters dialog will appear — fill in your experiment-specific settings and click **OK**
 5. A folder browser will open — navigate to and select your overarching **Experiment Folder** (the top-level folder containing all your day subfolders)
@@ -111,7 +111,7 @@ Both MATLAB and Python versions run identically and produce the same output file
 
 ### Running the Python version
 
-1. Open `LightSaver_batch.py` from the `python_scripts` folder in your Python IDE (VS Code is recommended and tested)
+1. Open `LightSaver_batch.py` from the `scripts_python` folder in your Python IDE (VS Code is recommended and tested)
 2. Press **F5** or click **Run**
 3. A parameters dialog will appear — fill in your experiment-specific settings and click **OK**
 4. A folder browser will open — navigate to and select your overarching **Experiment Folder**
