@@ -4,7 +4,7 @@
 
 **LightSaver** is a powerful data analysis package designed for fluorescent *C. elegans* imaging. Developed by Samuel Freitas with contributions from Raul Castro-Portugez, Vanessa Hofschneider, and Lainey Wait at the University of Arizona (Sutphin Lab) in the Microbiology (MCB) and Biomedical Engineering (BME) departments.
 
-> **Note:** LightSaver is available in both **MATLAB** and **Python** — choose whichever you're most comfortable with. Both versions produce identical results and output the same files.
+> **Note:** LightSaver is available in both **MATLAB** and **Python** — choose whichever you're most comfortable with. Both versions produce near identical results and output the same files.
 
 ---
 
